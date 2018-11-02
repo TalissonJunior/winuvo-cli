@@ -1,0 +1,43 @@
+{
+  "name": "winuvo",
+  "version": "0.1.0",
+  "description": "command line interface",
+  "preferGlobal": true,
+  "bin": "./dist/winuvo.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "debug": "node --inspect-brk ./dist/winuvo.js",
+    "watch": "node node_modules/webpack/bin/webpack.js --watch",
+    "build": "node node_modules/webpack/bin/webpack.js"
+  },
+  "main": "",
+  "keywords": [
+    "Winuvo",
+    "TypeScript",
+    "cli"
+  ],
+  "author": "Talisson Junior",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "commander": "^2.19.0",
+    "ora": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.1",
+    "shebang-loader": "0.0.1",
+    "ts-loader": "^5.3.0",
+    "tslint": "^5.11.0",
+    "tslint-webpack-plugin": "^1.2.2",
+    "typescript": "^3.1.5",
+    "webpack": "^4.23.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10",
+    "webpack-merge": "^4.1.4"
+  }
+}

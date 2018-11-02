@@ -1,0 +1,19 @@
+{
+    "rules": {
+        "class-name": true,
+        "no-duplicate-variable": true,
+        "no-any": false, 
+        "eofline": false,
+        "no-trailing-whitespace": false,
+        "comment-format": false,
+        "quotemark": false,
+        "no-console": false,
+        "one-line": false,
+        "no-consecutive-blank-lines": false,
+        "curly": false,
+        "semicolon": [
+            true,
+            "always"
+        ]
+    }
+}
