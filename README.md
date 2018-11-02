@@ -13,15 +13,17 @@ Node.js
 
 ## Winuvo commands
 ---
-Generate a new project, the **--type** flag and **--connectionString** ara optional parameters, if not set it will use **full** as default type, and it will only create the base methods;
+Generate a new project, the **--type** flag and **--connectionString** are optional parameters, if not set it will use **full** as default type, and it will only create the base methods;
 
 ```sh
 winuvo new <projectname>|<p> --type=full|example 
---connectionString=server:localhost;port=3306;database:db;user:root;password:root
+--connectionString=server:localhost;port:3306;database:mydb;user:root;password:root
 ```
 
+### Fluxogram
+[winuvo new project](https://www.lucidchart.com/invitations/accept/fbb425f3-5a90-436d-b892-3af166c0f30d)
+
 ## Development Hints
----
 
 ### Installing Dependencies
 
@@ -54,7 +56,7 @@ To build the application:
 npm run build
 ```
 
-To debug the application, place a breakpoin and then:
+To debug the application, place a breakpoint and then:
 
 ```sh
 npm run debug <command> <options>

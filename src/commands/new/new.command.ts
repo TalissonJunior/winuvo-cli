@@ -1,5 +1,6 @@
 import { BaseCommand } from "../base.command";
-import { Project, ProjectOptions} from "../../modules";
+import { Project} from "../../modules";
+import { ProjectOptions } from "../../models";
 
 export class NewCommand extends BaseCommand {
     project: Project = new Project();

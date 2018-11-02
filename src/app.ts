@@ -2,8 +2,9 @@ import * as program from 'commander';
 import * as json from '../package.json';
 import { NewCommand } from './commands';
 import { Log } from './utilities';
-import { ProjectOptions, ProjectValidator } from './modules';
+import { ProjectValidator } from './modules';
 import { GenerateType, ProjectType } from './enums';
+import { ProjectOptions } from './models';
 
 class App {
     private newCommand: NewCommand;
@@ -55,6 +56,7 @@ class App {
                 var projectOptions = new ProjectOptions();
                 projectOptions.name = name;
                 projectOptions.type = options.type;
+                projectOptions.connectionString = options.connectionString;
 
                 this.newCommand.spinner.text = `Creating ${projectOptions.type} project "${name}"...`;
                 this.newCommand.spinner.start();
