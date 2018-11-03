@@ -5,8 +5,13 @@ export class BaseModule {
     protected response: BaseResponse; 
     protected spinner: ora;
 
-    constructor(){
+    constructor(spinner?: ora){
         this.response = new BaseResponse();
-        this.spinner = new ora();
+        if(this.spinner){
+            this.spinner = spinner;
+        }
+        else {
+            this.spinner = new ora();
+        }
     }
 }

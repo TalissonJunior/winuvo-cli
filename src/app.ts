@@ -64,7 +64,8 @@ class App {
                 this.newCommand.createProject(projectOptions, (response: BaseResponse) => {
                
                     if (response.data) {
-                        this.newCommand.spinner.text = `Successfully created project "${name}"`;
+                        this.newCommand.spinner.succeed();
+                        this.newCommand.spinner.text = `Successfully created ${projectOptions.type} project "${name}"`;
                         this.newCommand.spinner.succeed();
                     }
                     else {
@@ -72,6 +73,8 @@ class App {
                         this.newCommand.spinner.fail();
                         Log.highlightError(response.error.message);
                     }
+                    
+                    process.exit();
                 });
 
             });// End action;

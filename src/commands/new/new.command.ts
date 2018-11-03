@@ -3,10 +3,11 @@ import { Project} from "../../modules";
 import { ProjectOptions } from "../../models";
 
 export class NewCommand extends BaseCommand {
-    project: Project = new Project();
+    project: Project;
 
     constructor() {
         super();
+        this.project = new Project(this.spinner);
     }
 
     createProject(options: ProjectOptions, callback: BaseCallback): void {

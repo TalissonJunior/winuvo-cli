@@ -5,14 +5,18 @@ import { ProjectValidator } from "..";
 import { BaseModule } from '../base.module';
 import { exec, ExecException } from 'child_process';
 import { ProjectOptions } from '../../models';
+import * as ora from 'ora';
 import { DatabaseModule } from '../database/database.module';
+import { Schematics } from '../../schematics/schematics';
 
 export class Project extends BaseModule {
     database: DatabaseModule;
+    schematics: Schematics;
 
-    constructor() {
-        super();
+    constructor(spinner?: ora) {
+        super(spinner);
         this.database = new DatabaseModule();
+        this.schematics = new Schematics();
     }
 
     create(options: ProjectOptions, callback: BaseCallback): void {
@@ -27,16 +31,16 @@ export class Project extends BaseModule {
 
                 if (dependencyResponse.data) {
                     this.spinner.succeed();
-                    
-                    if(options.connectionString)
-                    {
+
+                    if (options.connectionString) {
                         this.spinner.start('Validating connectionString...');
-                    
+
                         this.database.validateConnectionString(options.connectionString, (response) => {
-                            
-                            if(response.data){
+
+                            if (response.data) {
                                 this.spinner.succeed();
-                                callback(this.response.setData(true));
+                                this.spinner.start('Creating project...');
+                                this._createDotnetCoreProject(options, callback);
                             }
                             else {
                                 this.spinner.fail();
@@ -45,9 +49,8 @@ export class Project extends BaseModule {
                         });
                     }
                     else {
-                        callback(this.response.setData(true));
+                        this._createDotnetCoreProject(options, callback);
                     }
-                    //this._createDotnetCoreProject(options, callback);
                 }
                 else {
                     this.spinner.fail();
@@ -69,8 +72,13 @@ export class Project extends BaseModule {
                 callback(this.response.setError(BaseResponseCode.FAIL_TO_CREATE_PROJECT, error.message));
             }
             else {
-                callback(this.response.setData(true));
+                this.spinner.start('Configuring base settings...');
+                this._addBaseSettings(options, callback);
             }
         });
+    }
+
+    private _addBaseSettings(options: ProjectOptions, callback: BaseCallback) {
+        this.schematics.projectInitialSettings(options, this.database.connectionString, callback);
     }
 }
