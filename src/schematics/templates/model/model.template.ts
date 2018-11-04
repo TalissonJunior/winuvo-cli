@@ -1,4 +1,5 @@
 import { Table } from "../../../models/interfaces";
+import { ValidateService } from "../../../services";
 
 export const modelTemplate = (projectName: string, modelName: string, table: Table, content: string): string => {
     return `using System;
@@ -9,7 +10,7 @@ using ${projectName}.Models.Attributes;
 namespace ${projectName}.Models.Database
 {
     [Table("${table.name.toLowerCase()}")]
-    public class ${modelName.charAt(0).toUpperCase() + modelName.slice(1)}
+    public class ${ValidateService.capitalizeFirstLetter(modelName)}
     {
         ${content}
     }

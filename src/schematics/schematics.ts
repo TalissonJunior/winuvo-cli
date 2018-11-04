@@ -15,6 +15,8 @@ import { iBaseRepositoryTemplate } from './templates/repository/interfaces';
 import { responseTemplate, utilsTemplate, hashTemplate } from './templates/business/utilities';
 import { baseBusinessTemplate } from './templates/business/rules';
 import { iBaseBusinessTemplate } from './templates/business/interfaces';
+import { enumBaseResponseCodeTemplate } from './templates/project/enumBaseReponseCode.template';
+import { enumBaseResponseMessageTemplate } from './templates/project/enumBaseReponseMessage';
 
 export class Schematics {
     protected response: BaseResponse;
@@ -58,6 +60,16 @@ export class Schematics {
                 file: 'Repository/Repositories/BaseRepository.cs',
                 create: true,
                 content: baseRepositoryTemplate(projectName)
+            },
+            {
+                file: 'Business/Enums/BaseResponseCode.cs',
+                create: true,
+                content: enumBaseResponseCodeTemplate(projectName)
+            },
+            {
+                file: 'Business/Enums/BaseResponseMessage.cs',
+                create: true,
+                content: enumBaseResponseMessageTemplate(projectName)
             },
             {
                 file: 'Business/Utilities/Response.cs',

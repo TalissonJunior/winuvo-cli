@@ -34,4 +34,8 @@ export class ValidateService {
         return value.charAt(0).toUpperCase() + value.slice(1);
     }
 
+    static lowercaseFirstLetter(value: string): string {
+        return value.charAt(0).toLowerCase() + value.slice(1);
+    }
+
 }

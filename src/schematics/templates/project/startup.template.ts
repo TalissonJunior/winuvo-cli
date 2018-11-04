@@ -83,8 +83,8 @@ return `            app.UseExceptionHandler(appBuilder =>
                         context.Response.StatusCode = 500;
                         context.Response.ContentType = "application/json";
                         await context.Response.WriteAsync(JsonConvert.SerializeObject(new {
-                            code: BaseResponseCode.INTERNAL_SERVER_ERROR, 
-                            message: erro.Error.Message
+                            code = BaseResponseCode.INTERNAL_SERVER_ERROR, 
+                            message = erro.Error.Message
                         }));
                     }
                     //when no error, do next.

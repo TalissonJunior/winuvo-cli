@@ -3,10 +3,10 @@ return `{
     "Project": {
         "name": "${projectName}"
     },
-    "modelsPath": {
+    "controllerPath": {
         "interfaces":"",
-        "main":"/Models/Database/",
-        "suffixExtension":".cs"
+        "main":"/Controllers/",
+        "suffixExtension":"Controller.cs"
     },
     "businessPath":{
         "interfaces":"/Business/Interfaces/",
@@ -17,6 +17,11 @@ return `{
         "interfaces":"/Repository/Interfaces/",
         "main":"/Repository/Repositories/",
         "suffixExtension":"Repository.cs"
+    },
+    "modelPath": {
+        "interfaces":"",
+        "main":"/Models/Database/",
+        "suffixExtension":".cs"
     },
     "connectionPath": {
         "path": "/appsettings.json",

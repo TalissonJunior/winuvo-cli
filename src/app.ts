@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as program from 'commander';
 import * as json from '../package.json';
 import { NewCommand, GenerateCommand } from './commands';
@@ -83,29 +82,29 @@ class App {
 
             });// End action;
 
-        // GENERATE COMMAND
+        // GENERATE MODEL
         program
             .command("generate [<type>] [<name>]")
             .alias('g')
             .option('--table <name>', 'Table name')
-            .description('Generates model, repository, business or controller.')
+            .description('Generates model.')
             .action((type: GenerateType, name: string, options: any) => {
 
                 if (ValidateService.isInsideDotNetCoreProject()) {
 
                     if (type === GenerateType.MODEL || type === GenerateType.MODEL_ALIAS) {
-                        this.generateCommand.spinner.start(`Creating model ${name || ''}...`);
+                        this.generateCommand.spinner.start(`Generating model ${name || ''}...`);
 
                         if (!name) {
                             this.generateCommand.spinner.fail();
-                            Log.error('You must provide a model name. --model=your-model-name');
+                            Log.error('You must provide a model name. "winuvo generate model your-model-name"');
                         }
 
                         var modelOptions = new ModelOptions();
                         modelOptions.name = name;
                         modelOptions.table = options.table || modelOptions.name.toLowerCase();
 
-                        this.generateCommand.createModel(modelOptions, (response) => {
+                        this.generateCommand.generateModel(modelOptions, (response) => {
 
                             if (response.data) {
                                 this.generateCommand.spinner.succeed();
@@ -126,6 +125,238 @@ class App {
                     Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
                 }
             });
+
+        // GENERATE REPOSITORY
+        program
+            .command("generate [<type>] [<name>]")
+            .alias('g')
+            .description('Generates repository')
+            .action((type: GenerateType, name: string, options: any) => {
+
+                if (ValidateService.isInsideDotNetCoreProject()) {
+
+                    if (type === GenerateType.RESPOSITORY || type === GenerateType.RESPOSITORY_ALIAS) {
+                        this.generateCommand.spinner.start(`Generating repository ${name || ''}...`);
+
+                        if (!name) {
+                            this.generateCommand.spinner.fail();
+                            Log.error('You must provide a modelName for the repository, "winuvo generate repository your-model-name"');
+                        }
+
+                        name = ValidateService.capitalizeFirstLetter(name);
+
+                        this.generateCommand.spinner.text = `Generating repository ${name}...`;
+
+                        this.generateCommand.generateRepository(name, (response) => {
+
+                            if (response.data) {
+                                this.generateCommand.spinner.succeed();
+                                this.generateCommand.spinner.text = `Successfully created repository "${name}"`;
+                                this.generateCommand.spinner.succeed();
+                                Log.log(response.data);
+                            }
+                            else {
+                                this.generateCommand.spinner.text = response.error.code;
+                                this.generateCommand.spinner.fail();
+                                Log.highlightError(response.error.message);
+                            }
+
+                            process.exit();
+                        });
+                    }
+                }
+                else {
+                    Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
+                }
+            });
+
+        // GENERATE BUSINESS
+        program
+            .command("generate [<type>] [<name>]")
+            .alias('g')
+            .description('Generates business')
+            .action((type: GenerateType, name: string, options: any) => {
+
+                if (ValidateService.isInsideDotNetCoreProject()) {
+
+                    if (type === GenerateType.BUSINESS || type === GenerateType.BUSINESS_ALIAS) {
+                        this.generateCommand.spinner.start(`Generating business ${name || ''}...`);
+
+                        if (!name) {
+                            this.generateCommand.spinner.fail();
+                            Log.error('You must provide a modelName for the business, "winuvo generate business your-model-name"');
+                        }
+
+                        name = ValidateService.capitalizeFirstLetter(name);
+
+                        this.generateCommand.spinner.text = `Generating business ${name}...`;
+
+                        this.generateCommand.generateBusiness(name, (response) => {
+
+                            if (response.data) {
+                                this.generateCommand.spinner.succeed();
+                                this.generateCommand.spinner.text = `Successfully created business "${name}"`;
+                                this.generateCommand.spinner.succeed();
+                                Log.log(response.data);
+                            }
+                            else {
+                                this.generateCommand.spinner.text = response.error.code;
+                                this.generateCommand.spinner.fail();
+                                Log.highlightError(response.error.message);
+                            }
+
+                            process.exit();
+                        });
+                    }
+                }
+                else {
+                    Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
+                }
+            });
+
+        // GENERATE CONTROLLER
+        program
+            .command("generate [<type>] [<name>]")
+            .alias('g')
+            .description('Generates controller')
+            .action((type: GenerateType, name: string, options: any) => {
+
+                if (ValidateService.isInsideDotNetCoreProject()) {
+
+                    if (type === GenerateType.CONTROLLER || type === GenerateType.CONTROLLER_ALIAS) {
+                        this.generateCommand.spinner.start(`Generating controller ${name || ''}...`);
+
+                        if (!name) {
+                            this.generateCommand.spinner.fail();
+                            Log.error('You must provide a modelName for the controller, "winuvo generate controller your-model-name"');
+                        }
+
+                        name = ValidateService.capitalizeFirstLetter(name);
+
+                        this.generateCommand.spinner.text = `Generating controller ${name}...`;
+
+                        this.generateCommand.generateController(name, (response) => {
+
+                            if (response.data) {
+                                this.generateCommand.spinner.succeed();
+                                this.generateCommand.spinner.text = `Successfully created controller "${name}"`;
+                                this.generateCommand.spinner.succeed();
+                                Log.log(response.data);
+                            }
+                            else {
+                                this.generateCommand.spinner.text = response.error.code;
+                                this.generateCommand.spinner.fail();
+                                Log.highlightError(response.error.message);
+                            }
+
+                            process.exit();
+                        });
+                    }
+                }
+                else {
+                    Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
+                }
+            });
+
+               // GENERATE CONTROLLER
+        program
+        .command("generate [<type>] [<name>]")
+        .alias('g')
+        .description('Generates model, repository, business and controller, based on a model name.')
+        .option('--t , --table <tablename>', 'Sets the name of table to use')
+        .action((type: GenerateType, name: string, options: any) => {
+
+            if (ValidateService.isInsideDotNetCoreProject()) {
+
+                if (type === GenerateType.ALL || type === GenerateType.ALL_ALIAS) {
+                    this.generateCommand.spinner.start(`Generating model, repository, business and controller for ${name || ''}...`);
+
+                    if (!name) {
+                        this.generateCommand.spinner.fail();
+                        Log.error('You must provide a modelName to generate all, "winuvo generate all your-model-name"');
+                    }
+
+                    name = ValidateService.capitalizeFirstLetter(name);
+
+                    this.generateCommand.spinner.text = `Generating model, repository, business and controller for ${name}...`;
+
+                    var modelOptions = new ModelOptions();
+                    modelOptions.name = name;
+                    modelOptions.table = options.table || modelOptions.name.toLowerCase();
+
+                    this.generateCommand.generateModel(modelOptions, (response) => {
+
+                        if (response.data) {
+                            this.generateCommand.spinner.succeed();
+                            this.generateCommand.spinner.text = `Successfully created model "${name}"`;
+                            this.generateCommand.spinner.succeed();
+
+                            this.generateCommand.spinner.text = `Generating repository ${name}...`;
+
+                            this.generateCommand.generateRepository(name, (response) => {
+
+                                if (response.data) {
+                                    this.generateCommand.spinner.succeed();
+                                    this.generateCommand.spinner.text = `Successfully created repository "${name}"`;
+                                    this.generateCommand.spinner.succeed();
+                                    Log.log(response.data);
+
+                                    this.generateCommand.spinner.text = `Generating business ${name}...`;
+
+                                    this.generateCommand.generateBusiness(name, (response) => {
+            
+                                        if (response.data) {
+                                            this.generateCommand.spinner.succeed();
+                                            this.generateCommand.spinner.text = `Successfully created business "${name}"`;
+                                            this.generateCommand.spinner.succeed();
+                                            Log.log(response.data);
+
+                                            this.generateCommand.spinner.text = `Generating controller ${name}...`;
+
+                                            this.generateCommand.generateController(name, (response) => {
+                    
+                                                if (response.data) {
+                                                    this.generateCommand.spinner.succeed();
+                                                    this.generateCommand.spinner.text = `Successfully created controller "${name}"`;
+                                                    this.generateCommand.spinner.succeed();
+                                                    Log.log(response.data);
+                                                }
+                                                else {
+                                                    this.generateCommand.spinner.text = response.error.code;
+                                                    this.generateCommand.spinner.fail();
+                                                    Log.highlightError(response.error.message);
+                                                }
+                    
+                                                process.exit();
+                                            });
+                                        }
+                                        else {
+                                            this.generateCommand.spinner.text = response.error.code;
+                                            this.generateCommand.spinner.fail();
+                                            Log.highlightError(response.error.message);
+                                        }
+                                    });
+                                }
+                                else {
+                                    this.generateCommand.spinner.text = response.error.code;
+                                    this.generateCommand.spinner.fail();
+                                    Log.highlightError(response.error.message);
+                                }
+                            });
+                        }
+                        else {
+                            this.generateCommand.spinner.text = response.error.code;
+                            this.generateCommand.spinner.fail();
+                            Log.highlightError(response.error.message);
+                        }
+
+                    });
+                }
+            }
+            else {
+                Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
+            }
+        });
 
         // INVALID COMMANDS
         program
