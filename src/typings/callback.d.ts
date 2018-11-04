@@ -4,7 +4,7 @@ interface ErrorResponse {
 }
 
 interface BaseResponse {
-    data: null;
+    data: any;
     error: ErrorResponse;
 }
 

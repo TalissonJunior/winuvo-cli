@@ -1,10 +1,20 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { ConnectionString } from "../models/connnection-string";
+import { ConnectionString } from "../models/connection-string";
 import { ProjectOptions } from "../models";
 import { BaseResponse } from '../utilities';
 import { BaseResponseCode } from '../enums';
-import { appsettingsTemplate, projectcsprojTemplate, startupConfigureServicesTemplate, startupConfigureIsDevelopmentTemplate, startupConfigureIsProductionTemplate, startupConfigureExceptionTemplate } from './templates';
+import {
+    appSettingsTemplate, projectCsprojTemplate,
+    startupConfigureServicesTemplate, startupConfigureIsDevelopmentTemplate,
+    startupConfigureIsProductionTemplate, startupConfigureExceptionTemplate, winuvoTemplate
+} from './templates/project';
+import { modelHandlerTemplate, dateAttributesTemplate } from './templates/model';
+import { baseRepositoryTemplate } from './templates/repository/repositories';
+import { iBaseRepositoryTemplate } from './templates/repository/interfaces';
+import { responseTemplate, utilsTemplate, hashTemplate } from './templates/business/utilities';
+import { baseBusinessTemplate } from './templates/business/rules';
+import { iBaseBusinessTemplate } from './templates/business/interfaces';
 
 export class Schematics {
     protected response: BaseResponse;
@@ -20,52 +30,110 @@ export class Schematics {
 
         var files = [
             {
-                fileName: 'appsettings.json',
+                file: 'appsettings.json',
                 replaceAll: true,
-                content: appsettingsTemplate(projectName, connectionString)
+                content: appSettingsTemplate(projectName, connectionString)
             },
             {
-                fileName: 'Startup.cs',
-                replaceAll: false,
-                addAfterLine: 27,
-                content: startupConfigureServicesTemplate()
+                file: 'winuvo.json',
+                create: true,
+                content: winuvoTemplate(projectName)
             },
             {
-                fileName: 'Startup.cs',
-                replaceAll: false,
-                addAfterLine: 89,
-                content: startupConfigureIsDevelopmentTemplate()
+                file: 'Models/Database/ModelHandler.cs',
+                create: true,
+                content: modelHandlerTemplate(projectName)
             },
             {
-                fileName: 'Startup.cs',
-                replaceAll: false,
-                addAfterLine: 98,
-                content: startupConfigureIsProductionTemplate()
+                file: 'Models/Attributes/Attributes.cs',
+                create: true,
+                content: dateAttributesTemplate(projectName)
             },
             {
-                fileName: 'Startup.cs',
-                replaceAll: false,
-                addAfterLine: 105,
-                content: startupConfigureExceptionTemplate()
+                file: 'Repository/Interfaces/IBaseRepository.cs',
+                create: true,
+                content: iBaseRepositoryTemplate(projectName)
             },
             {
-                fileName: `${projectName}.csproj`,
+                file: 'Repository/Repositories/BaseRepository.cs',
+                create: true,
+                content: baseRepositoryTemplate(projectName)
+            },
+            {
+                file: 'Business/Utilities/Response.cs',
+                create: true,
+                content: responseTemplate(projectName)
+            },
+            {
+                file: 'Business/Utilities/Utils.cs',
+                create: true,
+                content: utilsTemplate(projectName)
+            },
+            {
+                file: 'Business/Utilities/Hash.cs',
+                create: true,
+                content: hashTemplate(projectName)
+            },
+            {
+                file: 'Business/Interfaces/IBaseBusiness.cs',
+                create: true,
+                content: iBaseBusinessTemplate(projectName)
+            },
+            {
+                file: 'Business/Rules/BaseBusiness.cs',
+                create: true,
+                content: baseBusinessTemplate(projectName)
+            },
+            {
+                file: 'Startup.cs',
                 replaceAll: false,
-                addAfterLine: 13,
-                content: projectcsprojTemplate()
+                replaces: [
+                    {
+                        addAfterLine: 27,
+                        content: startupConfigureServicesTemplate()
+                    },
+                    {
+                        addAfterLine: 89,
+                        content: startupConfigureIsDevelopmentTemplate()
+                    },
+                    {
+                        addAfterLine: 98,
+                        content: startupConfigureIsProductionTemplate()
+                    },
+                    {
+                        addAfterLine: 105,
+                        content: startupConfigureExceptionTemplate()
+                    }
+                ]
+            },
+            {
+                file: `${projectName}.csproj`,
+                replaceAll: false,
+                replaces: [
+                    {
+                        addAfterLine: 13,
+                        content: projectCsprojTemplate()
+                    }
+                ]
+
             }
         ];
 
         files.forEach(async (file, position) => {
-            var destination = path.resolve(process.cwd(), projectOptions.localPath, file.fileName);
+            var destination = path.join(projectOptions.localPath, file.file);
 
             if (file.replaceAll) {
                 try {
                     fs.writeFileSync(destination, file.content, 'utf8');
                 }
                 catch (e) {
-                    callback(this.response.setError(BaseResponseCode.FAIL_TO_CONFIG_BASE_SETTINGS, 'Failed to update ' + file.fileName));
+                    callback(this.response.setError(BaseResponseCode.FAIL_TO_CONFIG_BASE_SETTINGS, 'Failed to update ' + file.file));
                     return;
+                }
+            }
+            else if (file.create) {
+                if (!this.createFile(destination, file.content)) {
+                    callback(this.response.setError(BaseResponseCode.FAIL_TO_CONFIG_BASE_SETTINGS, 'Failed to create ' + file.file));
                 }
             }
             else {
@@ -73,11 +141,14 @@ export class Schematics {
                 try {
                     var data = fs.readFileSync(destination, 'utf8');
 
-                    data = this._addAfterLine(data, file.content, file.addAfterLine);
+                    file.replaces.forEach((replace) => {
+                        data = this._addAfterLine(data, replace.content, replace.addAfterLine);
+                    });
+
                     fs.writeFileSync(destination, data);
                 }
                 catch {
-                    callback(this.response.setError(BaseResponseCode.FAIL_TO_CONFIG_BASE_SETTINGS, 'Failed to update ' + file.fileName));
+                    callback(this.response.setError(BaseResponseCode.FAIL_TO_CONFIG_BASE_SETTINGS, 'Failed to update ' + file.file));
                     return;
                 }
             }
@@ -87,6 +158,51 @@ export class Schematics {
                 return;
             }
         });
+    }
+
+    createFile(filePath: string, template: string, nameWithExtension: string = null): boolean {
+        try {
+            var hasExtension = path.parse(filePath).ext;
+            var directoriesPath = filePath;
+
+            // If has extension
+            if (hasExtension) {
+                // remove file name with extension
+                directoriesPath = directoriesPath.substr(0, directoriesPath.indexOf(path.basename(filePath)));
+            }
+
+            var directories = directoriesPath.split('\\').length > directoriesPath.split('/').length ? directoriesPath.split('\\') : directoriesPath.split('/');
+
+            directories.reduce((path, subPath) => {
+                let currentPath;
+                if (subPath != '.') {
+                    currentPath = path + '/' + subPath;
+
+                    if (!fs.existsSync(currentPath)) {
+                        fs.mkdirSync(currentPath);
+                    }
+                }
+                else {
+                    currentPath = subPath;
+                }
+                return currentPath;
+            });
+
+
+            if (hasExtension && nameWithExtension || !hasExtension && nameWithExtension) {
+                filePath = path.join(directoriesPath, nameWithExtension);
+            }
+            else {
+                filePath = path.join(directoriesPath, path.basename(filePath));
+            }
+
+            fs.writeFileSync(filePath, template, 'utf8');
+
+            return true;
+        }
+        catch {
+            return false;
+        }
     }
 
     private _addAfterLine(data: string, dataToAdd: string, line: number): string {

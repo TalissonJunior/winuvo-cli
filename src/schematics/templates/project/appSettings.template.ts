@@ -1,6 +1,6 @@
-import { ConnectionString } from "../../models/connnection-string";
+import { ConnectionString } from "../../../models/connection-string";
 
-export const appsettingsTemplate = (projectName: string, connectionString: ConnectionString): string => {
+export const appSettingsTemplate = (projectName: string, connectionString: ConnectionString): string => {
 return `{
     "Logging": {
         "LogLevel": {
@@ -17,7 +17,7 @@ return `{
     "Email": {
         "Email": "",
         "Password": "",
-        "TemplatePath": "wwwroot/templates/email/",
+        "TemplatePath": "",
         "ClientServerUrl": "http://localhost:4200"
     },
     "ConnectionStrings": {
