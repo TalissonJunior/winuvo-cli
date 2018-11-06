@@ -82,7 +82,7 @@ class App {
 
             });// End action;
 
-        // GENERATE MODEL
+        // GENERATE COMMAND
         program
             .command("generate [<type>] [<name>]")
             .alias('g')
@@ -107,9 +107,8 @@ class App {
                         this.generateCommand.generateModel(modelOptions, (response) => {
 
                             if (response.data) {
-                                this.generateCommand.spinner.succeed();
-                                this.generateCommand.spinner.text = `Successfully created model "${name}"`;
-                                this.generateCommand.spinner.succeed();
+                                this.generateCommand.spinner.clear();
+                                Log.log(response.data);
                             }
                             else {
                                 this.generateCommand.spinner.text = response.error.code;
@@ -120,22 +119,9 @@ class App {
                             process.exit();
                         });
                     }
-                }
-                else {
-                    Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
-                }
-            });
 
-        // GENERATE REPOSITORY
-        program
-            .command("generate [<type>] [<name>]")
-            .alias('g')
-            .description('Generates repository')
-            .action((type: GenerateType, name: string, options: any) => {
-
-                if (ValidateService.isInsideDotNetCoreProject()) {
-
-                    if (type === GenerateType.RESPOSITORY || type === GenerateType.RESPOSITORY_ALIAS) {
+                    // REPOSITORY
+                    else if (type === GenerateType.RESPOSITORY || type === GenerateType.RESPOSITORY_ALIAS) {
                         this.generateCommand.spinner.start(`Generating repository ${name || ''}...`);
 
                         if (!name) {
@@ -150,9 +136,7 @@ class App {
                         this.generateCommand.generateRepository(name, (response) => {
 
                             if (response.data) {
-                                this.generateCommand.spinner.succeed();
-                                this.generateCommand.spinner.text = `Successfully created repository "${name}"`;
-                                this.generateCommand.spinner.succeed();
+                                this.generateCommand.spinner.clear();
                                 Log.log(response.data);
                             }
                             else {
@@ -164,22 +148,9 @@ class App {
                             process.exit();
                         });
                     }
-                }
-                else {
-                    Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
-                }
-            });
 
-        // GENERATE BUSINESS
-        program
-            .command("generate [<type>] [<name>]")
-            .alias('g')
-            .description('Generates business')
-            .action((type: GenerateType, name: string, options: any) => {
-
-                if (ValidateService.isInsideDotNetCoreProject()) {
-
-                    if (type === GenerateType.BUSINESS || type === GenerateType.BUSINESS_ALIAS) {
+                    // BUSINESS
+                    else if (type === GenerateType.BUSINESS || type === GenerateType.BUSINESS_ALIAS) {
                         this.generateCommand.spinner.start(`Generating business ${name || ''}...`);
 
                         if (!name) {
@@ -194,9 +165,7 @@ class App {
                         this.generateCommand.generateBusiness(name, (response) => {
 
                             if (response.data) {
-                                this.generateCommand.spinner.succeed();
-                                this.generateCommand.spinner.text = `Successfully created business "${name}"`;
-                                this.generateCommand.spinner.succeed();
+                                this.generateCommand.spinner.clear();
                                 Log.log(response.data);
                             }
                             else {
@@ -208,22 +177,9 @@ class App {
                             process.exit();
                         });
                     }
-                }
-                else {
-                    Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
-                }
-            });
 
-        // GENERATE CONTROLLER
-        program
-            .command("generate [<type>] [<name>]")
-            .alias('g')
-            .description('Generates controller')
-            .action((type: GenerateType, name: string, options: any) => {
-
-                if (ValidateService.isInsideDotNetCoreProject()) {
-
-                    if (type === GenerateType.CONTROLLER || type === GenerateType.CONTROLLER_ALIAS) {
+                    // CONTROLLER
+                    else if (type === GenerateType.CONTROLLER || type === GenerateType.CONTROLLER_ALIAS) {
                         this.generateCommand.spinner.start(`Generating controller ${name || ''}...`);
 
                         if (!name) {
@@ -238,9 +194,7 @@ class App {
                         this.generateCommand.generateController(name, (response) => {
 
                             if (response.data) {
-                                this.generateCommand.spinner.succeed();
-                                this.generateCommand.spinner.text = `Successfully created controller "${name}"`;
-                                this.generateCommand.spinner.succeed();
+                                this.generateCommand.spinner.clear();
                                 Log.log(response.data);
                             }
                             else {
@@ -252,111 +206,92 @@ class App {
                             process.exit();
                         });
                     }
+
+                    // ALL
+                    else if (type === GenerateType.ALL || type === GenerateType.ALL_ALIAS) {
+                        this.generateCommand.spinner.start(`Generating model, repository, business and controller for ${name || ''}...`);
+
+                        if (!name) {
+                            this.generateCommand.spinner.fail();
+                            Log.error('You must provide a modelName to generate all, "winuvo generate all your-model-name"');
+                        }
+
+                        name = ValidateService.capitalizeFirstLetter(name);
+
+                        this.generateCommand.spinner.text = `Generating model, repository, business and controller for ${name}...`;
+
+                        var modelOptions = new ModelOptions();
+                        modelOptions.name = name;
+                        modelOptions.table = options.table || modelOptions.name.toLowerCase();
+
+                        this.generateCommand.generateModel(modelOptions, (response) => {
+
+                            if (response.data) {
+                                this.generateCommand.spinner.clear();
+                                Log.log(response.data);
+
+                                this.generateCommand.spinner.text = `Generating repository ${name}...`;
+                                this.generateCommand.generateRepository(name, (response) => {
+
+                                    if (response.data) {
+                                        this.generateCommand.spinner.clear();
+                                        Log.log(response.data);
+
+                                        this.generateCommand.spinner.text = `Generating business ${name}...`;
+                                        this.generateCommand.generateBusiness(name, (response) => {
+
+                                            if (response.data) {
+                                                this.generateCommand.spinner.clear();
+                                                Log.log(response.data);
+
+                                                this.generateCommand.spinner.text = `Generating controller ${name}...`;
+                                                this.generateCommand.generateController(name, (response) => {
+
+                                                    if (response.data) {
+                                                        this.generateCommand.spinner.clear();
+                                                        Log.log(response.data);
+                                                    }
+                                                    else {
+                                                        this.generateCommand.spinner.text = response.error.code;
+                                                        this.generateCommand.spinner.fail();
+                                                        Log.highlightError(response.error.message);
+                                                    }
+
+                                                    process.exit();
+                                                });
+                                            }
+                                            else {
+                                                this.generateCommand.spinner.text = response.error.code;
+                                                this.generateCommand.spinner.fail();
+                                                Log.highlightError(response.error.message);
+                                                process.exit();
+                                            }
+                                        });
+                                    }
+                                    else {
+                                        this.generateCommand.spinner.text = response.error.code;
+                                        this.generateCommand.spinner.fail();
+                                        Log.highlightError(response.error.message);
+                                        process.exit();
+                                    }
+                                });
+                            }
+                            else {
+                                this.generateCommand.spinner.text = response.error.code;
+                                this.generateCommand.spinner.fail();
+                                Log.highlightError(response.error.message);
+                                process.exit();
+                            }
+
+                        });
+                    }
                 }
                 else {
                     Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
                 }
             });
 
-               // GENERATE CONTROLLER
-        program
-        .command("generate [<type>] [<name>]")
-        .alias('g')
-        .description('Generates model, repository, business and controller, based on a model name.')
-        .option('--t , --table <tablename>', 'Sets the name of table to use')
-        .action((type: GenerateType, name: string, options: any) => {
 
-            if (ValidateService.isInsideDotNetCoreProject()) {
-
-                if (type === GenerateType.ALL || type === GenerateType.ALL_ALIAS) {
-                    this.generateCommand.spinner.start(`Generating model, repository, business and controller for ${name || ''}...`);
-
-                    if (!name) {
-                        this.generateCommand.spinner.fail();
-                        Log.error('You must provide a modelName to generate all, "winuvo generate all your-model-name"');
-                    }
-
-                    name = ValidateService.capitalizeFirstLetter(name);
-
-                    this.generateCommand.spinner.text = `Generating model, repository, business and controller for ${name}...`;
-
-                    var modelOptions = new ModelOptions();
-                    modelOptions.name = name;
-                    modelOptions.table = options.table || modelOptions.name.toLowerCase();
-
-                    this.generateCommand.generateModel(modelOptions, (response) => {
-
-                        if (response.data) {
-                            this.generateCommand.spinner.succeed();
-                            this.generateCommand.spinner.text = `Successfully created model "${name}"`;
-                            this.generateCommand.spinner.succeed();
-
-                            this.generateCommand.spinner.text = `Generating repository ${name}...`;
-
-                            this.generateCommand.generateRepository(name, (response) => {
-
-                                if (response.data) {
-                                    this.generateCommand.spinner.succeed();
-                                    this.generateCommand.spinner.text = `Successfully created repository "${name}"`;
-                                    this.generateCommand.spinner.succeed();
-                                    Log.log(response.data);
-
-                                    this.generateCommand.spinner.text = `Generating business ${name}...`;
-
-                                    this.generateCommand.generateBusiness(name, (response) => {
-            
-                                        if (response.data) {
-                                            this.generateCommand.spinner.succeed();
-                                            this.generateCommand.spinner.text = `Successfully created business "${name}"`;
-                                            this.generateCommand.spinner.succeed();
-                                            Log.log(response.data);
-
-                                            this.generateCommand.spinner.text = `Generating controller ${name}...`;
-
-                                            this.generateCommand.generateController(name, (response) => {
-                    
-                                                if (response.data) {
-                                                    this.generateCommand.spinner.succeed();
-                                                    this.generateCommand.spinner.text = `Successfully created controller "${name}"`;
-                                                    this.generateCommand.spinner.succeed();
-                                                    Log.log(response.data);
-                                                }
-                                                else {
-                                                    this.generateCommand.spinner.text = response.error.code;
-                                                    this.generateCommand.spinner.fail();
-                                                    Log.highlightError(response.error.message);
-                                                }
-                    
-                                                process.exit();
-                                            });
-                                        }
-                                        else {
-                                            this.generateCommand.spinner.text = response.error.code;
-                                            this.generateCommand.spinner.fail();
-                                            Log.highlightError(response.error.message);
-                                        }
-                                    });
-                                }
-                                else {
-                                    this.generateCommand.spinner.text = response.error.code;
-                                    this.generateCommand.spinner.fail();
-                                    Log.highlightError(response.error.message);
-                                }
-                            });
-                        }
-                        else {
-                            this.generateCommand.spinner.text = response.error.code;
-                            this.generateCommand.spinner.fail();
-                            Log.highlightError(response.error.message);
-                        }
-
-                    });
-                }
-            }
-            else {
-                Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
-            }
-        });
 
         // INVALID COMMANDS
         program

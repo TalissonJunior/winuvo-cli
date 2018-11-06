@@ -1,4 +1,4 @@
-![Build Status](https://travis-ci.org/TalissonJunior/wniuvo-cli.svg?branch=master)
+![Build Status](https://travis-ci.org/TalissonJunior/winuvo-cli.svg?branch=master)
 
 # WINUVO-CLI
 

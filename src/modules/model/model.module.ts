@@ -40,7 +40,7 @@ export class ModelModule extends BaseModule {
                     if(!fs.existsSync(path.join(modelPath, modelExtension))){
                        
                         if (this.schematics.createFile(modelPath, modelTemplate, modelExtension)) {
-                            callback(this.response.setData(true));
+                            callback(this.response.setData(`<create/> ${path.join(modelPath, modelExtension)}`));
                         }
                         else{
                             callback(this.response.setError('Fail to create model', ' Could not create the model'));
