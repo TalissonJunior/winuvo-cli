@@ -2,17 +2,14 @@ import * as ora from 'ora';
 import * as path from 'path';
 import * as fs from 'fs';
 import { BaseModule } from "../base.module";
-import { Schematics } from '../../schematics/schematics';
 import { ValidateService } from '../../services';
 import { iRepositoryTemplate } from '../../schematics/templates/repository/interfaces';
 import { repositoryTemplate } from '../../schematics/templates/repository/repositories';
 
 export class RepositoryModule extends BaseModule {
-    schematics: Schematics;
 
     constructor(spinner?: ora) {
         super(spinner);
-        this.schematics = new Schematics();
     }
 
     create(modelName: string, callback: BaseCallback): void {
@@ -39,7 +36,17 @@ export class RepositoryModule extends BaseModule {
             if (this.schematics.createFile(repositoryInterfacesPath, this._createRepositoryInterfaceFileTemplate(modelName), repositoryInterfaceExtension)) {
 
                 if (this.schematics.createFile(repositoryPath, this._createRepositoryFileTemplate(modelName), repositoryExtension)) {
-                    callback(this.response.setData(`<create/> ${path.join(repositoryInterfacesPath, repositoryInterfaceExtension)}\n<create/> ${path.join(repositoryPath, repositoryExtension)}`));
+
+                    this.addStartupService(repositoryInterfaceExtension, repositoryExtension, (startupResponse) => {
+
+                        if(startupResponse.data){
+                            var logStartup = startupResponse.data == true? '' : '\n' + startupResponse.data;
+                            callback(this.response.setData(`<create/> ${path.join(repositoryInterfacesPath, repositoryInterfaceExtension)}\n<create/> ${path.join(repositoryPath, repositoryExtension)}` + logStartup));
+                        }
+                        else{
+                            callback(this.response.setData(`<create/> ${path.join(repositoryInterfacesPath, repositoryInterfaceExtension)}\n<create/> ${path.join(repositoryPath, repositoryExtension)}`));
+                        }
+                    });
                 }
                 else{
                     callback(this.response.setError('Fail to create repository', ' Could not create the repository'));

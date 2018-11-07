@@ -49,7 +49,17 @@ export class BusinessModule extends BaseModule {
             if (this.schematics.createFile(businessInterfacesPath, this._createBusinessInterfaceFileTemplate(modelName), businessInterfaceExtension)) {
 
                 if (this.schematics.createFile(businessPath, this._createBusinessFileTemplate(modelName), businessExtension)) {
-                    callback(this.response.setData(`<create/> ${path.join(businessInterfacesPath, businessInterfaceExtension)}\n<create/> ${path.join(businessPath, businessExtension)}`));
+                   
+                    this.addStartupService(businessInterfaceExtension, businessExtension, (startupResponse) => {
+
+                        if(startupResponse.data){
+                            var logStartup = startupResponse.data == true? '' : '\n' + startupResponse.data;
+                            callback(this.response.setData(`<create/> ${path.join(businessInterfacesPath, businessInterfaceExtension)}\n<create/> ${path.join(businessPath, businessExtension)}` + logStartup));
+                        }
+                        else{
+                            callback(this.response.setData(`<create/> ${path.join(businessInterfacesPath, businessInterfaceExtension)}\n<create/> ${path.join(businessPath, businessExtension)}`));
+                        }
+                    });
                 }
                 else{
                     callback(this.response.setError('Fail to create business', ' Could not create the business'));

@@ -1,3 +1,17 @@
+export const startupImportsTemplate = (projectName: string): string => {
+return `using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
+using ${projectName}.Business.Enums;
+using ${projectName}.Business.Interfaces;
+using ${projectName}.Business.Rules;
+using ${projectName}.Repository.Interfaces;
+using ${projectName}.Repository.Repositories;
+using Newtonsoft.Json;
+using System.Text;`;
+};
 
 export const startupConfigureServicesTemplate = (): string => {
     return `  
@@ -56,7 +70,7 @@ export const startupConfigureServicesTemplate = (): string => {
 };
 
 export const startupConfigureIsDevelopmentTemplate = (): string => {
-return `                app.UseCors(builder => builder
+    return `                app.UseCors(builder => builder
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader()
@@ -64,7 +78,7 @@ return `                app.UseCors(builder => builder
 };
 
 export const startupConfigureIsProductionTemplate = (): string => {
-return `                app.UseCors(builder => builder
+    return `                app.UseCors(builder => builder
                 .WithOrigins("http://localhost:4200")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
@@ -72,7 +86,7 @@ return `                app.UseCors(builder => builder
 };
 
 export const startupConfigureExceptionTemplate = (): string => {
-return `            app.UseExceptionHandler(appBuilder =>
+    return `            app.UseExceptionHandler(appBuilder =>
             {
                 appBuilder.Use(async (context, next) =>
                 {
@@ -95,6 +109,3 @@ return `            app.UseExceptionHandler(appBuilder =>
             app.UseCors("policy");
             app.UseAuthentication();`;
 };
-
-
-

@@ -7,7 +7,7 @@ import { BaseResponseCode } from '../enums';
 import {
     appSettingsTemplate, projectCsprojTemplate,
     startupConfigureServicesTemplate, startupConfigureIsDevelopmentTemplate,
-    startupConfigureIsProductionTemplate, startupConfigureExceptionTemplate, winuvoTemplate
+    startupConfigureIsProductionTemplate, startupConfigureExceptionTemplate, winuvoTemplate, startupImportsTemplate
 } from './templates/project';
 import { modelHandlerTemplate, dateAttributesTemplate } from './templates/model';
 import { baseRepositoryTemplate } from './templates/repository/repositories';
@@ -97,6 +97,10 @@ export class Schematics {
                 content: baseBusinessTemplate(projectName)
             },
             {
+                file: 'Controllers/ValuesController.cs',
+                delete: true
+            },
+            {
                 file: 'Startup.cs',
                 replaceAll: false,
                 replaces: [
@@ -115,6 +119,10 @@ export class Schematics {
                     {
                         addAfterLine: 105,
                         content: startupConfigureExceptionTemplate()
+                    },
+                    {
+                        addAfterLine: 12,
+                        content: startupImportsTemplate(projectName)
                     }
                 ]
             },
@@ -148,13 +156,27 @@ export class Schematics {
                     callback(this.response.setError(BaseResponseCode.FAIL_TO_CONFIG_BASE_SETTINGS, 'Failed to create ' + file.file));
                 }
             }
+            else if (file.delete) {
+                
+                fs.unlink(destination, (err: NodeJS.ErrnoException) => {
+
+                    if(err){
+                        callback(this.response.setError(BaseResponseCode.FAIL_TO_CONFIG_BASE_SETTINGS, 'Failed to delete ' + file.file));
+                    }
+                    else{
+                        callback(this.response.setData(true));
+                    }
+                    
+                    return;
+                });
+            }
             else {
 
                 try {
                     var data = fs.readFileSync(destination, 'utf8');
 
                     file.replaces.forEach((replace) => {
-                        data = this._addAfterLine(data, replace.content, replace.addAfterLine);
+                        data = this.addAfterLine(data, replace.content, replace.addAfterLine);
                     });
 
                     fs.writeFileSync(destination, data);
@@ -217,7 +239,7 @@ export class Schematics {
         }
     }
 
-    private _addAfterLine(data: string, dataToAdd: string, line: number): string {
+    addAfterLine(data: string, dataToAdd: string, line: number): string {
         var array = data.split('\n');
 
         array.splice(line, 0, dataToAdd);

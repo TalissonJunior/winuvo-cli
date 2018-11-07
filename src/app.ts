@@ -91,6 +91,7 @@ class App {
             .action((type: GenerateType, name: string, options: any) => {
 
                 if (ValidateService.isInsideDotNetCoreProject()) {
+                    var modelOptions = new ModelOptions();
 
                     if (type === GenerateType.MODEL || type === GenerateType.MODEL_ALIAS) {
                         this.generateCommand.spinner.start(`Generating model ${name || ''}...`);
@@ -100,7 +101,6 @@ class App {
                             Log.error('You must provide a model name. "winuvo generate model your-model-name"');
                         }
 
-                        var modelOptions = new ModelOptions();
                         modelOptions.name = name;
                         modelOptions.table = options.table || modelOptions.name.toLowerCase();
 
@@ -220,7 +220,6 @@ class App {
 
                         this.generateCommand.spinner.text = `Generating model, repository, business and controller for ${name}...`;
 
-                        var modelOptions = new ModelOptions();
                         modelOptions.name = name;
                         modelOptions.table = options.table || modelOptions.name.toLowerCase();
 
