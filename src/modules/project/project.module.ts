@@ -79,6 +79,7 @@ export class Project extends BaseModule {
     }
 
     private _addBaseSettings(options: ProjectOptions, callback: BaseCallback) {
+        
         this.schematics.projectInitialSettings(options, this.database.connectionString, callback);
     }
 }

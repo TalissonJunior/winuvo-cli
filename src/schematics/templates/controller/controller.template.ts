@@ -44,28 +44,28 @@ namespace ${projectName}.Controllers
         [HttpPost]
         public object insert([FromBody] ${ValidateService.capitalizeFirstLetter(modelName)} model)
         {
-            object result = _validatModel();
+            object result = _validateModel();
             return result == null ? _baseResponse.setData(_business.insertAsync(model).Result) : result;
         }
 
         [HttpPost("all")]
         public object insert([FromBody] List<${ValidateService.capitalizeFirstLetter(modelName)}> models)
         {
-            object result = _validatModel();
+            object result = _validateModel();
             return result == null ? _baseResponse.setData(_business.insertAsync(models).Result) : result;
         }
 
         [HttpPut]
         public object edit([FromBody] ${ValidateService.capitalizeFirstLetter(modelName)} model)
         {
-            object result = _validatModel();
+            object result = _validateModel();
             return result == null ? _business.updateAsync(model).Result : result;
         }
 
         [HttpPut("all")]
         public object edit([FromBody] List<${ValidateService.capitalizeFirstLetter(modelName)}> models)
         {
-             object result = _validatModel();
+             object result = _validateModel();
              return result == null ? _business.updateAsync(models).Result : result;
         }
 
@@ -102,7 +102,7 @@ namespace ${projectName}.Controllers
         }
         #endregion
 
-        private object _validatModel(){
+        private object _validateModel(){
             if(!ModelState.IsValid){
                 return BadRequest(new
                 {

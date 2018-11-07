@@ -47,19 +47,32 @@ export const startupConfigureServicesTemplate = (): string => {
                 {
                     OnAuthenticationFailed = context =>
                     {
-                        context.Response.OnStarting(async () =>
-                        {
-                            if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-                            {
-                                context.Response.Headers.Add("Token-Expired", "true");
-                                context.Response.Headers.Add("Access-Control-Expose-Headers", "Token-Expired");
-                            }
-                            else if (context.Exception.GetType() == typeof(SecurityTokenException))
-                            {
-                                context.Response.StatusCode = 400;
-                            }
+                        Func<Task> callback = async () =>
+                           {
+                               if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                               {
+                                   context.Response.Headers.Add("Token-Expired", "true");
+                                   context.Response.Headers.Add("Access-Control-Expose-Headers", "Token-Expired");
 
-                        });
+                                   await context.Response.WriteAsync(JsonConvert.SerializeObject(new
+                                   {
+                                       code = BaseResponseCode.AUTHENTICATE_EXPIRED_TOKEN,
+                                       message = context.Exception.Message
+                                   }));
+                               }
+                               else if (context.Exception.GetType() == typeof(SecurityTokenException))
+                               {
+                                   context.Response.StatusCode = 400;
+                                   await context.Response.WriteAsync(JsonConvert.SerializeObject(new
+                                   {
+                                       code = BaseResponseCode.AUTHENTICATE_INVALID_TOKEN,
+                                       message = context.Exception.Message
+                                   }));
+                               }
+
+                           };
+
+                        context.Response.OnStarting(callback);
 
                         return Task.CompletedTask;
                     }

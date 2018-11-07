@@ -88,7 +88,8 @@ export class ModelModule extends BaseModule {
                 content += `${T + T}[Required(ErrorMessage = "${column.Field} is required")]`;
             }
 
-            content += `${N + T + T}public ${column.Type} ${column.Field} { get; set; }`;
+            var breakLine = column.Null == 'NO' ? N : '';
+            content += `${breakLine + T + T}public ${column.Type} ${column.Field} { get; set; }`;
 
             if (index < table.columns.length - 1) {
                 content += N + N;

@@ -12,11 +12,11 @@ Node.js
 
 
 ## Winuvo commands
----
-Generate a new project, the **--type** flag and **--connectionString** are optional parameters, if not set it will use **full** as default type, and it will only create the base methods;
+
+Generate a new project, the **--type** flag is a optional parameter, if not set it will use **full** as the default;
 
 ```sh
-winuvo new <projectname>|<p> --type=full|example 
+winuvo new <projectname>|<p>
 --connectionString=server:localhost;port:3306;database:mydb;user:root;password:root
 ```
 

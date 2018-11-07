@@ -22,6 +22,8 @@ namespace ${projectName}.Business.Enums
         public static string AUTHENTICATE_INVALID_PASSWORD = "auth/invalid-password";
 
         public static string AUTHENTICATE_INVALID_TOKEN = "auth/invalid-token";
+        
+        public static string AUTHENTICATE_EXPIRED_TOKEN = "auth/token-expired";
 
         public static string AUTHENTICATE_INVALID_REFRESH_TOKEN = "auth/invalid-refresh-token";
         

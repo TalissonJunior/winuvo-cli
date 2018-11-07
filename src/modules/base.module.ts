@@ -47,27 +47,14 @@ export class BaseModule {
             }
             else {
                 var addServiceMVC = 'services.AddMvc()';
-                var lineNumber = 0, lineNumberOfServiceMVC = 0;
-    
-                rl.on('line', (line: string) => {
-                    lineNumber += 1;
+                data = this.schematics.addAfterKeyword(data, serviceTemplate, addServiceMVC);
 
-                    if (line.indexOf(addServiceMVC) > -1) {
-                        lineNumberOfServiceMVC = lineNumber;
-                    }
-                });
-    
-                rl.on('close', () => {
-    
-                    data = this.schematics.addAfterLine(data,serviceTemplate, lineNumberOfServiceMVC);
-
-                    if (this.schematics.createFile(startupPath, data)) {
-                        callback(this.response.setData(`<update/> ${startupPath}`));
-                    }
-                    else {
-                        callback(this.response.setError('Fail to update file', `Couldn't update file ${startupPath}`));
-                    }
-                });
+                if (this.schematics.createFile(startupPath, data)) {
+                    callback(this.response.setData(`<update/> ${startupPath}`));
+                }
+                else {
+                    callback(this.response.setError('Fail to update file', `Couldn't update file ${startupPath}`));
+                }
             }
         }
         catch {

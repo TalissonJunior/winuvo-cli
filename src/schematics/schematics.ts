@@ -106,22 +106,37 @@ export class Schematics {
                 replaces: [
                     {
                         addAfterLine: 27,
+                        addAfterKeyword: '',
+                        addBeforeKeyword: '',
+                        addToRight: '',
                         content: startupConfigureServicesTemplate()
                     },
                     {
-                        addAfterLine: 89,
+                        addAfterLine: -1,
+                        addAfterKeyword: 'app.UseDeveloperExceptionPage()',
+                        addBeforeKeyword: '',
+                        addToRight: '',
                         content: startupConfigureIsDevelopmentTemplate()
                     },
                     {
-                        addAfterLine: 98,
+                        addAfterLine: -1,
+                        addAfterKeyword: 'app.UseHsts()',
+                        addBeforeKeyword: '',
+                        addToRight: '',
                         content: startupConfigureIsProductionTemplate()
                     },
                     {
-                        addAfterLine: 105,
+                        addAfterLine: -1,
+                        addAfterKeyword: '',
+                        addBeforeKeyword: 'app.UseHttpsRedirection()',
+                        addToRight: '',
                         content: startupConfigureExceptionTemplate()
                     },
                     {
                         addAfterLine: 12,
+                        addAfterKeyword: '',
+                        addBeforeKeyword: '',
+                        addToRight: '',
                         content: startupImportsTemplate(projectName)
                     }
                 ]
@@ -131,7 +146,16 @@ export class Schematics {
                 replaceAll: false,
                 replaces: [
                     {
-                        addAfterLine: 13,
+                        addAfterLine: -1,
+                        addBeforeKeyword: '',
+                        addToRight: 'PackageReference Include="Microsoft.AspNetCore.App"',
+                        content: `Version="2.1.1"`
+                    },
+                    {
+                        addAfterLine: -1,
+                        addAfterKeyword: '<PackageReference',
+                        addBeforeKeyword: '',
+                        addToRight: '',
                         content: projectCsprojTemplate()
                     }
                 ]
@@ -157,16 +181,12 @@ export class Schematics {
                 }
             }
             else if (file.delete) {
-                
+
                 fs.unlink(destination, (err: NodeJS.ErrnoException) => {
 
-                    if(err){
+                    if (err) {
                         callback(this.response.setError(BaseResponseCode.FAIL_TO_CONFIG_BASE_SETTINGS, 'Failed to delete ' + file.file));
                     }
-                    else{
-                        callback(this.response.setData(true));
-                    }
-                    
                     return;
                 });
             }
@@ -176,7 +196,20 @@ export class Schematics {
                     var data = fs.readFileSync(destination, 'utf8');
 
                     file.replaces.forEach((replace) => {
-                        data = this.addAfterLine(data, replace.content, replace.addAfterLine);
+
+                        if (replace.addToRight) {
+                            data = this.addToRightOfTagKeyword(data, replace.content, replace.addToRight);
+                        }
+                        else if (replace.addAfterKeyword) {
+                            data = this.addAfterKeyword(data, replace.content, replace.addAfterKeyword);
+                        }
+                        else if (replace.addBeforeKeyword) {
+                            data = this.addBeforeKeyword(data, replace.content, replace.addBeforeKeyword);
+                        }
+                        else if (replace.addAfterLine) {
+                            data = this.addAfterLine(data, replace.content, replace.addAfterLine);
+                        }
+
                     });
 
                     fs.writeFileSync(destination, data);
@@ -246,5 +279,55 @@ export class Schematics {
 
         return array.join('\n');
     }
+
+    /**
+     * @description Adds data after the keyword
+     * @param data 
+     * @param dataToAdd 
+     * @param keyword must be unique
+     */
+    addAfterKeyword(data: string, dataToAdd: string, keyword: string): string {
+        var array = data.split('\n');
+
+        var replacementIndex = array.findIndex((line) => line.indexOf(keyword) > -1);
+
+        if (replacementIndex) {
+            array.splice(replacementIndex + 1, 0, dataToAdd);
+        }
+
+        return array.join('\n');
+    }
+
+    /**
+    * @description Adds data after the keyword
+    * @param data 
+    * @param dataToAdd 
+    * @param keyword must be unique
+    */
+    addBeforeKeyword(data: string, dataToAdd: string, keyword: string): string {
+        var array = data.split('\n');
+
+        var replacementIndex = array.findIndex((line) => line.indexOf(keyword) > -1);
+
+        if (replacementIndex) {
+            array.splice(replacementIndex, 0, dataToAdd);
+        }
+
+        return array.join('\n');
+    }
+
+    addToRightOfTagKeyword(data: string, dataToAdd: string, tagKeyword: string): string {
+        var array = data.split('\n');
+
+        var replacementIndex = array.findIndex((line) => line.indexOf(tagKeyword) > -1);
+
+        if (replacementIndex) {
+            dataToAdd = dataToAdd.replace(/\r?\n|\r/g, '');
+            array[replacementIndex] = array[replacementIndex].replace('/>',' ' + dataToAdd + ' />');
+        }
+
+        return array.join('\n');
+    }
+
 
 }

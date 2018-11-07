@@ -54,6 +54,11 @@ class App {
                     this.newCommand.spinner.fail();
                     Log.error("Invalid type of project");
                 }
+                
+                if(!options.connectionString){
+                    this.newCommand.spinner.fail();
+                    Log.error('You must provide a connection string, use the flag "--connectionString=your-connection-string" to set it.');
+                }
 
                 this.newCommand.spinner.succeed();
                 var projectOptions = new ProjectOptions();
