@@ -4,7 +4,7 @@
 
 A command line interface to manager backend web api([.Net Core](https://github.com/dotnet/core)) and front end applications([Angular x "schematics"](https://angular.io/)), writting in [Nodejs](https://nodejs.org/en/) using [Typescript](https://www.typescriptlang.org/) 
 
-The goal of this project is to pattern development at winuvo company generating all of the backend and frontend from a single line of code, this will allow winuvo developers to create what users think that they are actually creating **"pages, design"**
+The goal of this project is to pattern development generating all of the backend and frontend from a single line of code, this will allow developers to create what users think that they are actually creating **"pages, design"**.
 
 # Usage
 
