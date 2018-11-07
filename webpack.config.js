@@ -19,6 +19,9 @@ module.exports = {
     resolve: {
         extensions: ['.ts', '.js'],
     },
+    externals: [
+        /^[a-z\-0-9]+$/ // Ignore node_modules folder
+    ],
     plugins: [
         new tsLintPlugin({
             files: ['./src/**/*.ts']

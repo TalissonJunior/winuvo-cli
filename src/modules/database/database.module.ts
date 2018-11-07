@@ -200,7 +200,7 @@ export class DatabaseModule {
                             } as TableTree;
 
                             var promise = new Promise((resolve, reject) => {
-                                this._createTableTree(conn, tableTree, (createTableTreeResponse) => {
+                                this._createTableChildTree(conn, tableTree, (createTableTreeResponse) => {
 
                                     if(createTableTreeResponse.data) {
                                         this.tablesTree.push(createTableTreeResponse.data);
@@ -256,6 +256,45 @@ export class DatabaseModule {
                 }
             }
         });
+    }
+
+    private _createTableChildTree(conn: mysql.Connection, table: TableTree, callback: BaseCallback) {
+
+        conn.query(`
+            select COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_COLUMN_NAME, REFERENCED_TABLE_NAME
+            from information_schema.KEY_COLUMN_USAGE
+            where TABLE_NAME = '${table.name}'
+            and REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}'
+            `,
+            (err: mysql.MysqlError, rows: Array<any>) => {
+                if (err) {
+                    callback(this.response.setError(`Insuficient previlegies in database "${this.connectionString.database}" for table ${table.name}`, err.message));
+                    return;
+                }
+
+                if (rows.length > 0) {
+
+                    rows.forEach((row, index) => {
+                        table.references.push({
+                            foreignKeyColumnName: row['COLUMN_NAME'],
+                            foreignKeyConstraintName: row['CONSTRAINT_NAME'],
+                            foreignKeyReferenceTableColumnName: row['REFERENCED_COLUMN_NAME'],
+                            referencedTable: {
+                                name: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).name,
+                                columns: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).columns,
+                                references: []
+                            }
+                        });
+
+                        if(rows.length -1 == index){
+                            callback(this.response.setData(table));
+                        }
+                    });
+                }
+                else {
+                    callback(this.response.setData(table));
+                }
+            });
     }
 
     private _createTableTree(conn: mysql.Connection, table: TableTree, callback: BaseCallback) {

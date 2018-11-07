@@ -30,6 +30,9 @@ export class ModelModule extends BaseModule {
             if (databaseResponse.data) {
                 var table;
 
+                //REMOVE
+                fs.writeFileSync(path.join(process.cwd() + 'teste.json'), JSON.stringify(this.database.tablesTree));
+                //REMOVE
                 table = this.database.tablesTree.find((table) => table.name.toLowerCase() == tableName.toLowerCase());
              
                 if (table) {
