@@ -1,5 +1,6 @@
 dist/
 .tmp/
+examples/
 node_modules/
 .DS*
 ._.*

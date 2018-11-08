@@ -6,6 +6,7 @@ import { BaseResponse } from "../../utilities";
 import { BaseResponseCode } from "../../enums";
 import { Table, TableColumn } from '../../models/interfaces';
 import { TableTree } from '../../models/interfaces/table-tree';
+import { validCreatedDateFields, validUpdatedDateFields } from '../model/constants/valid-create-update-date-fields';
 
 export class DatabaseModule {
     tables: Array<Table> = [];
@@ -192,27 +193,30 @@ export class DatabaseModule {
                         var tableTreePromises = [];
 
                         // Create tables tree
-                        this.tables.forEach((table: Table, idx: number) => {
-                            var tableTree = {
-                                name: table.name,
-                                columns: table.columns,
-                                references: []
-                            } as TableTree;
+                        this.tables.forEach((table: Table) => {
 
-                            var promise = new Promise((resolve, reject) => {
-                                this._createTableChildTree(conn, tableTree, (createTableTreeResponse) => {
+                            if (!this._isTheMiddleTable(table)) {
+                                var tableTree = {
+                                    name: table.name,
+                                    columns: table.columns,
+                                    references: []
+                                } as TableTree;
 
-                                    if(createTableTreeResponse.data) {
-                                        this.tablesTree.push(createTableTreeResponse.data);
-                                        resolve(true);
-                                    }
-                                    else{
-                                        reject(createTableTreeResponse);
-                                    }
+                                var promise = new Promise((resolve, reject) => {
+                                    this._createTableChildTree(conn, tableTree, (createTableTreeResponse) => {
+
+                                        if (createTableTreeResponse.data) {
+                                            this.tablesTree.push(createTableTreeResponse.data);
+                                            resolve(true);
+                                        }
+                                        else {
+                                            reject(createTableTreeResponse);
+                                        }
+                                    });
                                 });
-                            });
 
-                            tableTreePromises.push(promise);
+                                tableTreePromises.push(promise);
+                            }
                         });
 
                         Promise.all(tableTreePromises).then((tableTreeResponse) => {
@@ -286,7 +290,7 @@ export class DatabaseModule {
                             }
                         });
 
-                        if(rows.length -1 == index){
+                        if (rows.length - 1 == index) {
                             callback(this.response.setData(table));
                         }
                     });
@@ -341,5 +345,30 @@ export class DatabaseModule {
                     callback(this.response.setData(table));
                 }
             });
+    }
+
+    /**
+     * @description It will check if the table is the middle table, the one used 
+     * to relate 2 tables, the one that doesn´t have data to retrieve 
+     * @param table 
+     */
+    private _isTheMiddleTable(table: Table) {
+
+        var primaryAndForeignFiedKeys = table.columns.filter((column) => column.Key == 'PRI');
+
+        if ((primaryAndForeignFiedKeys.length == 3 || primaryAndForeignFiedKeys.length == 2)) {
+            var createUpdateDateFields = table.columns.filter((column) => validCreatedDateFields[column.Field] || validUpdatedDateFields[column.Field]);
+
+            if (createUpdateDateFields.length == 2 && table.columns.length <= 5) {
+                return true;
+            }
+            else if (!createUpdateDateFields.length && table.columns.length <= 3) {
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
     }
 }                             
