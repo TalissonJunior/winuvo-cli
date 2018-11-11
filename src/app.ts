@@ -91,6 +91,7 @@ class App {
         program
             .command("generate [<type>] [<name>]")
             .alias('g')
+            .option('--model <name>', 'Model name')
             .option('--table <name>', 'Table name')
             .description('Generates model.')
             .action((type: GenerateType, name: string, options: any) => {
@@ -135,10 +136,11 @@ class App {
                         }
 
                         name = ValidateService.capitalizeFirstLetter(name);
-
+                        options.model = options.model != null ? ValidateService.capitalizeFirstLetter(options.model) : name;
+                    
                         this.generateCommand.spinner.text = `Generating repository ${name}...`;
 
-                        this.generateCommand.generateRepository(name, (response) => {
+                        this.generateCommand.generateRepository(name, options.model, (response) => {
 
                             if (response.data) {
                                 this.generateCommand.spinner.clear();
@@ -164,10 +166,11 @@ class App {
                         }
 
                         name = ValidateService.capitalizeFirstLetter(name);
+                        options.model = options.model != null ? ValidateService.capitalizeFirstLetter(options.model) : name;
 
                         this.generateCommand.spinner.text = `Generating business ${name}...`;
 
-                        this.generateCommand.generateBusiness(name, (response) => {
+                        this.generateCommand.generateBusiness(name, options.model, (response) => {
 
                             if (response.data) {
                                 this.generateCommand.spinner.clear();
@@ -193,10 +196,11 @@ class App {
                         }
 
                         name = ValidateService.capitalizeFirstLetter(name);
+                        options.model = options.model != null ? ValidateService.capitalizeFirstLetter(options.model) : name;
 
                         this.generateCommand.spinner.text = `Generating controller ${name}...`;
 
-                        this.generateCommand.generateController(name, (response) => {
+                        this.generateCommand.generateController(name, options.model, (response) => {
 
                             if (response.data) {
                                 this.generateCommand.spinner.clear();
@@ -222,10 +226,11 @@ class App {
                         }
 
                         name = ValidateService.capitalizeFirstLetter(name);
+                        options.model = options.model != null ? ValidateService.capitalizeFirstLetter(options.model) : name;
 
                         this.generateCommand.spinner.text = `Generating model, repository, business and controller for ${name}...`;
 
-                        modelOptions.name = name;
+                        modelOptions.name = options.model;
                         modelOptions.table = options.table || modelOptions.name.toLowerCase();
 
                         this.generateCommand.generateModel(modelOptions, (response) => {
@@ -235,21 +240,21 @@ class App {
                                 Log.log(response.data);
 
                                 this.generateCommand.spinner.text = `Generating repository ${name}...`;
-                                this.generateCommand.generateRepository(name, (response) => {
+                                this.generateCommand.generateRepository(name, options.model, (response) => {
 
                                     if (response.data) {
                                         this.generateCommand.spinner.clear();
                                         Log.log(response.data);
 
                                         this.generateCommand.spinner.text = `Generating business ${name}...`;
-                                        this.generateCommand.generateBusiness(name, (response) => {
+                                        this.generateCommand.generateBusiness(name, options.model, (response) => {
 
                                             if (response.data) {
                                                 this.generateCommand.spinner.clear();
                                                 Log.log(response.data);
 
                                                 this.generateCommand.spinner.text = `Generating controller ${name}...`;
-                                                this.generateCommand.generateController(name, (response) => {
+                                                this.generateCommand.generateController(name,options.model, (response) => {
 
                                                     if (response.data) {
                                                         this.generateCommand.spinner.clear();

@@ -7,7 +7,7 @@ using ${projectName}.Models;
 
 namespace ${projectName}.Business.Interfaces
 {
-    public interface IBaseBusiness<TModel>
+    public interface IBaseBusin ess<TModel>
     {
         BaseResponse get(int id);
 

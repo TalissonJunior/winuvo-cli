@@ -20,16 +20,16 @@ export class GenerateCommand extends BaseCommand {
         this.model.create(options, callback);
     }
 
-    generateRepository(modelName: string, callback: BaseCallback): void {
-        this.repository.create(modelName, callback);
+    generateRepository(name: string, modelName: string, callback: BaseCallback): void {
+        this.repository.create(name, modelName, callback);
     }
 
-    generateBusiness(modelName: string, callback: BaseCallback): void {
-        this.business.create(modelName, callback);
+    generateBusiness(name: string, modelName: string, callback: BaseCallback): void {
+        this.business.create(name, modelName, callback);
     }
 
-    generateController(modelName: string, callback: BaseCallback): void {
-        this.controller.create(modelName, callback);
+    generateController(name: string, modelName: string, callback: BaseCallback): void {
+        this.controller.create(name, modelName, callback);
     }
 
 }

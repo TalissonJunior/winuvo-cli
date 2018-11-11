@@ -1,7 +1,7 @@
 import { ValidateService } from "../../../../services";
 
-export const repositoryTemplate = (projectName: string, modelName: string): string => {
-return `using System;
+export const repositoryTemplate = (projectName: string, className: string, modelName: string): string => {
+    return `using System;
 using System.Collections.Generic;
 using System.Data;
 using Dapper;
@@ -14,14 +14,13 @@ using System.Linq;
 
 namespace ${projectName}.Repository.Repositories
 {
-    public class ${ValidateService.capitalizeFirstLetter(modelName)}Repository : BaseRepository<${ValidateService.capitalizeFirstLetter(modelName)}>, I${ValidateService.capitalizeFirstLetter(modelName)}Repository
+    public class ${ValidateService.capitalizeFirstLetter(className)}Repository : BaseRepository<${ValidateService.capitalizeFirstLetter(modelName)}>, I${ValidateService.capitalizeFirstLetter(className)}Repository
     {
-        public ${ValidateService.capitalizeFirstLetter(modelName)}Repository(IConfiguration config) : base(config)
+        public ${ValidateService.capitalizeFirstLetter(className)}Repository(IConfiguration config) : base(config)
         {
         }
     }
 }`;
 };
-    
-        
-        
+
+

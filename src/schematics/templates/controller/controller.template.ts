@@ -1,7 +1,7 @@
 import { ValidateService } from "../../../services";
 
-export const controllerTemplate = (projectName: string, modelName: string): string => {
-return `using System;
+export const controllerTemplate = (projectName: string, className: string, modelName: string): string => {
+    return `using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -16,14 +16,14 @@ using ${projectName}.Business.Utilities;
 namespace ${projectName}.Controllers
 {
     [Route("api/[controller]")]
-    public class ${ValidateService.capitalizeFirstLetter(modelName)}Controller : Controller
+    public class ${ValidateService.capitalizeFirstLetter(className)}Controller : Controller
     {
-        private I${ValidateService.capitalizeFirstLetter(modelName)}Business _business;
+        private I${ValidateService.capitalizeFirstLetter(className)}Business _business;
         private BaseResponse _baseResponse;
 
-        public ${ValidateService.capitalizeFirstLetter(modelName)}Controller(I${ValidateService.capitalizeFirstLetter(modelName)}Business ${ValidateService.lowercaseFirstLetter(modelName)}Business)
+        public ${ValidateService.capitalizeFirstLetter(className)}Controller(I${ValidateService.capitalizeFirstLetter(className)}Business ${ValidateService.lowercaseFirstLetter(className)}Business)
         {
-            _business = ${ValidateService.lowercaseFirstLetter(modelName)}Business;
+            _business = ${ValidateService.lowercaseFirstLetter(className)}Business;
             _baseResponse = new BaseResponse();
         }
 
@@ -116,6 +116,5 @@ namespace ${projectName}.Controllers
     }
 }`;
 };
-    
-        
-        
+
+

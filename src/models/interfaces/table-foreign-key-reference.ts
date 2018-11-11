@@ -13,5 +13,6 @@ export interface TableForeignKeyReference {
      * Column nameof the referenced table 
      */
     foreignKeyReferenceTableColumnName: string;
+    
     referencedTable: TableTree;
 }

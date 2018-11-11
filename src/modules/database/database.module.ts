@@ -18,7 +18,6 @@ export class DatabaseModule {
         this.response = new BaseResponse();
         this.connectionString = new ConnectionString();
         this.tablesTree = new Array<TableTree>();
-
     }
 
     connect(connection: string | ConnectionString = null, callback: BaseCallback) {
@@ -140,7 +139,7 @@ export class DatabaseModule {
     }
 
     private _mysqlGetTablesAndAttributes(connection: ConnectionString, callback: BaseCallback) {
-
+        var middlesTables = [];
         var conn = mysql.createConnection({
             host: connection.server,
             port: connection.port,
@@ -187,6 +186,7 @@ export class DatabaseModule {
                         });
 
                         tablesDescribePromises.push(promise);
+
                     });// End of foreach
 
                     Promise.all(tablesDescribePromises).then(() => {
@@ -217,10 +217,36 @@ export class DatabaseModule {
 
                                 tableTreePromises.push(promise);
                             }
+                            else {
+                                middlesTables.push(table);
+                            }
                         });
 
-                        Promise.all(tableTreePromises).then((tableTreeResponse) => {
-                            callback(this.response.setData(true));
+                        Promise.all(tableTreePromises).then(() => {
+
+                            this.tablesTree.forEach((table: TableTree) => {
+
+                                var promise = new Promise((resolve, reject) => {
+                                    this._associateMidleTables(table, middlesTables, (tableResult) => {
+
+                                        if (tableResult.data) {
+                                            table = tableResult.data;
+                                            resolve(true);
+                                        }
+                                        else {
+                                            reject(tableResult);
+                                        }
+                                    });
+                                });
+
+                                tableTreePromises.push(promise);
+                            });
+
+                            Promise.all(tableTreePromises).then(() => {
+                                callback(this.response.setData(true));
+                            }, (error: BaseResponse) => {
+                                callback(error);
+                            });
 
                         }, (error: BaseResponse) => {
                             callback(error);
@@ -262,6 +288,31 @@ export class DatabaseModule {
         });
     }
 
+    private _associateMidleTables(table: TableTree, middleTables: Array<TableTree> = [], callback: BaseCallback) {
+
+        table.middleTables = [];
+
+        middleTables.forEach((middleTable) => {
+            var referenceFields = middleTable.columns.filter((row) => row.Key == 'PRI').map((row) => row.Field);
+
+            var field = referenceFields.find((field) => {
+                var result = table.columns.find((tableRow) => tableRow.Field == field);
+
+                if (result && field == result.Field) {
+                    return true;
+                }
+            });
+
+            if (field) {
+                table.middleTables.push(middleTable);
+            }
+        });
+
+
+        callback(this.response.setData(table));
+
+    }
+
     private _createTableChildTree(conn: mysql.Connection, table: TableTree, callback: BaseCallback) {
 
         conn.query(`
@@ -286,7 +337,8 @@ export class DatabaseModule {
                             referencedTable: {
                                 name: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).name,
                                 columns: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).columns,
-                                references: []
+                                references: [],
+                                middleTables: []
                             }
                         });
 
@@ -325,7 +377,8 @@ export class DatabaseModule {
                             referencedTable: {
                                 name: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).name,
                                 columns: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).columns,
-                                references: []
+                                references: [],
+                                middleTables: []
                             }
                         });
 

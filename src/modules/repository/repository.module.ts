@@ -12,7 +12,7 @@ export class RepositoryModule extends BaseModule {
         super(spinner);
     }
 
-    create(modelName: string, callback: BaseCallback): void {
+    create(name: string , modelName: string, callback: BaseCallback): void {
         modelName = modelName.replace(/Repository/g, '');
 
         var modelPath = path.join(process.cwd(), this.config['modelPath']['main']);
@@ -20,8 +20,8 @@ export class RepositoryModule extends BaseModule {
         var repositoryPath = path.join(process.cwd(), this.config['repositoryPath']['main']);
 
         var modelExtension = ValidateService.capitalizeFirstLetter(modelName)  + this.config['modelPath']['suffixExtension'];
-        var repositoryInterfaceExtension = 'I' + ValidateService.capitalizeFirstLetter(modelName)  + this.config['repositoryPath']['suffixExtension'];
-        var repositoryExtension = ValidateService.capitalizeFirstLetter(modelName)  + this.config['repositoryPath']['suffixExtension'];
+        var repositoryInterfaceExtension = 'I' + ValidateService.capitalizeFirstLetter(name)  + this.config['repositoryPath']['suffixExtension'];
+        var repositoryExtension = ValidateService.capitalizeFirstLetter(name)  + this.config['repositoryPath']['suffixExtension'];
 
         if(!fs.existsSync(path.join(modelPath, modelExtension))){
             callback(this.response.setError('Couldnt find model', `Coudn´t find a model with the name ${modelName} at ${path.join(modelPath, modelExtension)}`));
@@ -33,9 +33,9 @@ export class RepositoryModule extends BaseModule {
             callback(this.response.setError('Already exists repository', `Already exists a repository ${path.join(repositoryPath, repositoryExtension)}`));
         }
         else{
-            if (this.schematics.createFile(repositoryInterfacesPath, this._createRepositoryInterfaceFileTemplate(modelName), repositoryInterfaceExtension)) {
+            if (this.schematics.createFile(repositoryInterfacesPath, this._createRepositoryInterfaceFileTemplate(name, modelName), repositoryInterfaceExtension)) {
 
-                if (this.schematics.createFile(repositoryPath, this._createRepositoryFileTemplate(modelName), repositoryExtension)) {
+                if (this.schematics.createFile(repositoryPath, this._createRepositoryFileTemplate(name, modelName), repositoryExtension)) {
 
                     this.addStartupService(repositoryInterfaceExtension, repositoryExtension, (startupResponse) => {
 
@@ -58,11 +58,11 @@ export class RepositoryModule extends BaseModule {
         }
     }
  
-    private _createRepositoryInterfaceFileTemplate(modelName: string): string {
-        return iRepositoryTemplate(this.config['Project']['name'], modelName);
+    private _createRepositoryInterfaceFileTemplate(className: string, modelName: string): string {
+        return iRepositoryTemplate(this.config['Project']['name'], className, modelName);
     }
 
-    private _createRepositoryFileTemplate(modelName: string): string {
-        return repositoryTemplate(this.config['Project']['name'], modelName);
+    private _createRepositoryFileTemplate(className: string, modelName: string): string {
+        return repositoryTemplate(this.config['Project']['name'], className, modelName);
     }
 }

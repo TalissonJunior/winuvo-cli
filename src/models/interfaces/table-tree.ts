@@ -14,4 +14,6 @@ export interface TableTree {
      * foreing keys reference
      */
     references: Array<TableForeignKeyReference>;
+    
+    middleTables: Array<TableTree>;
 }

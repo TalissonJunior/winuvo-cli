@@ -15,11 +15,10 @@ npm install winuvo -g
 
 ## Winuvo commands
 
-Create a new project, the **--type** flag is a optional parameter, if not set it will use **full** as the default;
+Create a new project
 
 ```sh
-winuvo new <projectname>|<p>
---connectionString=server:localhost;port:3306;database:mydb;user:root;password:root
+winuvo new project-name --connectionString="server:localhost;port:3306;database:db;user:root;password:root"
 ```
 
 Generate model, repository, business and controllers
@@ -34,24 +33,30 @@ Automatically create components for winuvo web api(dotnet core) project.
 
 The given name is normalized into an appropriate naming convention. For example, winuvo generate repository user creates a repository interface by the name of IUserRepository in ./Repository/Interfaces and a repository by the name of UserRepository in ./Repository/Repositories
 
-| Input        | Description          
-| ------------- | -------------
-| ```type```      | The type of generator (e.g. model, repository, business, controller)
-| ``modelName``    | The name of the model of your database or the name of your model if used with --table flag.  
+| Input        | Description   | Required?       
+| ------------- | -------------| -------------
+| ```type```      | The type of generator (e.g. model, repository, business, controller, all) | true
+| ``name``    | The name of your component  | true 
+| ``--model``    | The name of your model, if not set it will use the component name | false 
+| ``--table``    | The name of your table, if not set it will use the component name| false 
 
+**Note that:**
+
+ * The **"--table" flag** will only work for **type** "model" and "all";
+ * The **"--model" flag** will not work for **type** "model";
 
 #### Examples
 
 ```sh
-winuvo generate model user --table=tb_user
+winuvo generate model user --table="tb_user"
 
-winuvo generate repository user
+winuvo generate repository users --model="user"
 
-winuvo generate business user
+winuvo generate business users --model="user"
 
-winuvo generate controller user
+winuvo generate controller users --model="user"
 
-winuvo generate all user --table=tb_user
+winuvo generate all users --model="user" --table="tb_user"
 ```
 
 ### Fluxogram
