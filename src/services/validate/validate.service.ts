@@ -38,4 +38,14 @@ export class ValidateService {
         return value.charAt(0).toLowerCase() + value.slice(1);
     }
 
+    static transformStringToCamelCase(value: string): string {
+        value = value.replace(/[.*+?^${}()-_@|[\]\\]/g, ';');
+
+        var arrayValues = value.split(';');
+
+        arrayValues = arrayValues.map((value) => this.capitalizeFirstLetter(value));
+
+        return arrayValues.join('');
+    }
+
 }

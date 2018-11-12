@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mysql from 'mysql';
+import * as _ from 'lodash';
+import * as dotty from 'dotty';
 import { ConnectionString } from "../../models/connection-string";
 import { BaseResponse } from "../../utilities";
 import { BaseResponseCode } from "../../enums";
@@ -139,7 +141,6 @@ export class DatabaseModule {
     }
 
     private _mysqlGetTablesAndAttributes(connection: ConnectionString, callback: BaseCallback) {
-        var middlesTables = [];
         var conn = mysql.createConnection({
             host: connection.server,
             port: connection.port,
@@ -171,7 +172,7 @@ export class DatabaseModule {
                 if (tables.length > 0) {
                     var tablesDescribePromises = [];
                     // Get tables attributes
-                    this.tables.forEach((table: Table, index: number) => {
+                    this.tables.forEach((table: Table) => {
 
                         var promise = new Promise((resolve, reject) => {
                             conn.query('DESCRIBE ' + table.name, (err: mysql.MysqlError, tableColumns: Array<TableColumn>) => {
@@ -191,61 +192,49 @@ export class DatabaseModule {
 
                     Promise.all(tablesDescribePromises).then(() => {
                         var tableTreePromises = [];
+                        var middlesTables = [];
 
                         // Create tables tree
                         this.tables.forEach((table: Table) => {
 
-                            if (!this._isTheMiddleTable(table)) {
-                                var tableTree = {
-                                    name: table.name,
-                                    columns: table.columns,
-                                    references: []
-                                } as TableTree;
+                            var tableTree = {
+                                name: table.name,
+                                columns: table.columns,
+                                references: [],
+                                isMiddleTable: false
+                            } as TableTree;
 
-                                var promise = new Promise((resolve, reject) => {
-                                    this._createTableChildTree(conn, tableTree, (createTableTreeResponse) => {
-
-                                        if (createTableTreeResponse.data) {
-                                            this.tablesTree.push(createTableTreeResponse.data);
-                                            resolve(true);
-                                        }
-                                        else {
-                                            reject(createTableTreeResponse);
-                                        }
-                                    });
-                                });
-
-                                tableTreePromises.push(promise);
-                            }
-                            else {
+                            if (this._isTheMiddleTable(table)) {
+                                tableTree.isMiddleTable = true;
                                 middlesTables.push(table);
                             }
+
+                            var promise = new Promise((resolve, reject) => {
+                                this._createTableChildTree(conn, tableTree, (createTableTreeResponse) => {
+
+                                    if (createTableTreeResponse.data) {
+                                        this.tablesTree.push(createTableTreeResponse.data);
+                                        resolve(true);
+                                    }
+                                    else {
+                                        reject(createTableTreeResponse);
+                                    }
+                                });
+                            });
+
+                            tableTreePromises.push(promise);
                         });
 
                         Promise.all(tableTreePromises).then(() => {
 
-                            this.tablesTree.forEach((table: TableTree) => {
+                            this._associateMidleTables(conn, this.tablesTree, middlesTables, (tableResult) => {
 
-                                var promise = new Promise((resolve, reject) => {
-                                    this._associateMidleTables(table, middlesTables, (tableResult) => {
-
-                                        if (tableResult.data) {
-                                            table = tableResult.data;
-                                            resolve(true);
-                                        }
-                                        else {
-                                            reject(tableResult);
-                                        }
-                                    });
-                                });
-
-                                tableTreePromises.push(promise);
-                            });
-
-                            Promise.all(tableTreePromises).then(() => {
-                                callback(this.response.setData(true));
-                            }, (error: BaseResponse) => {
-                                callback(error);
+                                if (tableResult.data) {
+                                    callback(this.response.setData(true));
+                                }
+                                else {
+                                    callback(tableResult);
+                                }
                             });
 
                         }, (error: BaseResponse) => {
@@ -265,7 +254,7 @@ export class DatabaseModule {
     }
 
     private _getConnectionString(callback: BaseCallback) {
-        var destination = path.join(process.cwd(), 'appsettings.json');
+        var destination = path.join(process.cwd(), 'winuvo.json');
 
         fs.readFile(destination, 'utf8', (err: NodeJS.ErrnoException, data) => {
 
@@ -273,44 +262,119 @@ export class DatabaseModule {
                 callback(this.response.setError(`Could not find the "${destination}" file`, `Make sure you have the "${destination}" file`));
             }
             else {
-                var appsettings = JSON.parse(data);
+                var winuvojson = JSON.parse(data);
 
-                if (!appsettings['ConnectionStrings']) {
-                    callback(this.response.setError(`Could not find the property "ConnectionStrings"`, `Make sure you have the property "ConnectionStrings" on your "${destination}" file.`));
-                }
-                else if (!appsettings['ConnectionStrings']['DefaultConnection']) {
-                    callback(this.response.setError(`Could not find the property "ConnectionStrings.DefaultConnection"`, `Make sure you have the property "ConnectionStrings.DefaultConnection" on your "${destination}" file.`));
-                }
-                else {
-                    callback(this.response.setData(appsettings['ConnectionStrings']['DefaultConnection']));
-                }
+                var connectionStringFilePath = path.join(process.cwd(),winuvojson['connectionPath']['path']);
+
+                fs.readFile(connectionStringFilePath, 'utf8', (err: NodeJS.ErrnoException, connectionStringFileData: string) => {
+                    if (err) {
+                        callback(this.response.setError(`Could not find the "${destination}" file`, `Make sure you have the "${destination}" file`));
+                    }
+                    else {
+                        var connectionString = dotty.get(JSON.parse(connectionStringFileData), winuvojson['connectionPath']['property']);
+          
+                        if(!connectionString) {
+                            callback(this.response.setError(`Could not find the property "${winuvojson['connectionPath']['property']}"`, `Make sure you "winuvo.json" have "ConnectionPath.property" pointing to the connetionString property`));
+                        }
+                        else{
+                            callback(this.response.setData(connectionString));
+                        }
+                    }
+                });
             }
         });
     }
 
-    private _associateMidleTables(table: TableTree, middleTables: Array<TableTree> = [], callback: BaseCallback) {
+    private _associateMidleTables(conn: mysql.Connection, tablesTree: Array<TableTree>, middleTables: Array<TableTree> = [], callback: BaseCallback) {
 
-        table.middleTables = [];
+        var tableTreePromises = [];
 
-        middleTables.forEach((middleTable) => {
-            var referenceFields = middleTable.columns.filter((row) => row.Key == 'PRI').map((row) => row.Field);
+        tablesTree.forEach((table) => {
+            table.middleTables = [];
 
-            var field = referenceFields.find((field) => {
-                var result = table.columns.find((tableRow) => tableRow.Field == field);
+            var promise = new Promise((resolve, reject) => {
+                conn.query(`
+               SELECT TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME
+               FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+               WHERE REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}' AND
+               REFERENCED_TABLE_NAME = '${table.name}';`,
+                    (err: mysql.MysqlError, tableRows: Array<any>) => {
+                        if (err) {
+                            reject(err.message);
+                        }
+                        else {
+                          
+                            //  Create the middle table
+                            var middleTableOutput = Object.assign({});
 
-                if (result && field == result.Field) {
-                    return true;
-                }
+                            var middleTableIndex = middleTables.findIndex((middleTable) => {
+                                var index = tableRows.findIndex((row) => row["TABLE_NAME"] == middleTable.name);
+                               
+                                if (index > -1) {
+                                    middleTableOutput.foreignKeyColumnName = tableRows[index]['REFERENCED_COLUMN_NAME'];
+                                    middleTableOutput.foreignKeyConstraintName = tableRows[index]['CONSTRAINT_NAME'];
+                                    middleTableOutput.foreignKeyReferenceTableColumnName = tableRows[index]['COLUMN_NAME'];
+                                    middleTableOutput.referencedTable = _.clone(middleTable);
+
+                                    return true;
+                                }
+                            });
+                            if (middleTableIndex > -1) {
+                                // get the middleTable referenced table
+
+                                conn.query(`
+                                select COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_COLUMN_NAME, REFERENCED_TABLE_NAME
+                                from information_schema.KEY_COLUMN_USAGE
+                                where TABLE_NAME = '${middleTableOutput.referencedTable.name}'
+                                and REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}'
+                                `,
+                                    (err: mysql.MysqlError, referencedTableRows: Array<any>) => {
+                                        if (err) {
+                                            reject(err.message);
+                                        }
+                                        else {
+                                           
+                                         
+                                            var referencedMiddleTableRow = _.cloneDeep(referencedTableRows.find((row) => row['COLUMN_NAME'] != middleTableOutput.foreignKeyReferenceTableColumnName));
+                                        
+                                            middleTableOutput.referencedTable.references = [
+                                                {
+                                                    foreignKeyColumnName: referencedMiddleTableRow['COLUMN_NAME'],
+                                                    foreignKeyConstraintName: referencedMiddleTableRow['CONSTRAINT_NAME'],
+                                                    foreignKeyReferenceTableColumnName: referencedMiddleTableRow['REFERENCED_COLUMN_NAME'],
+                                                    referencedTable: {
+                                                        name: tablesTree.find((tb) => tb.name == referencedMiddleTableRow['REFERENCED_TABLE_NAME']).name,
+                                                        columns: tablesTree.find((tb) => tb.name == referencedMiddleTableRow['REFERENCED_TABLE_NAME']).columns,
+                                                        references: [],
+                                                        middleTables: [],
+                                                        isMiddleTable : false
+                                                    }
+                                                }
+                                            ];
+
+                                            table.middleTables.push(middleTableOutput);
+                                            resolve(true);
+                                        }
+                                    });
+                            }
+                            else {
+
+                                resolve(true);
+                            }
+
+                        }
+                    });
             });
 
-            if (field) {
-                table.middleTables.push(middleTable);
-            }
+            tableTreePromises.push(promise);
         });
 
 
-        callback(this.response.setData(table));
-
+        Promise.all(tableTreePromises).then(() => {
+            callback(this.response.setData(true));
+        }, (error: BaseResponse) => {
+            callback(error);
+        });
     }
 
     private _createTableChildTree(conn: mysql.Connection, table: TableTree, callback: BaseCallback) {
@@ -338,7 +402,8 @@ export class DatabaseModule {
                                 name: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).name,
                                 columns: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).columns,
                                 references: [],
-                                middleTables: []
+                                middleTables: [],
+                                isMiddleTable : false
                             }
                         });
 
@@ -378,7 +443,8 @@ export class DatabaseModule {
                                 name: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).name,
                                 columns: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).columns,
                                 references: [],
-                                middleTables: []
+                                middleTables: [],
+                                isMiddleTable: false
                             }
                         });
 
@@ -407,7 +473,8 @@ export class DatabaseModule {
      */
     private _isTheMiddleTable(table: Table) {
 
-        var primaryAndForeignFiedKeys = table.columns.filter((column) => column.Key == 'PRI');
+
+        var primaryAndForeignFiedKeys = table.columns.filter((column) => column.Key == 'MUL');
 
         if ((primaryAndForeignFiedKeys.length == 3 || primaryAndForeignFiedKeys.length == 2)) {
             var createUpdateDateFields = table.columns.filter((column) => validCreatedDateFields[column.Field] || validUpdatedDateFields[column.Field]);

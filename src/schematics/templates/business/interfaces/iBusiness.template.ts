@@ -5,6 +5,7 @@ export const iBusinessTemplate = (projectName: string, className: string, modelN
 using System;
 using System.Threading.Tasks;
 using ${projectName}.Models.Database;
+using ${projectName}.Models.ViewModels;
 using ${projectName}.Business.Utilities;
 
 namespace ${projectName}.Business.Interfaces

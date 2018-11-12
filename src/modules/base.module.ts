@@ -6,16 +6,20 @@ import * as stream from 'stream';
 import { BaseResponse, Log } from "../utilities";
 import { ValidateService } from '../services';
 import { Schematics } from '../schematics/schematics';
+import { DatabaseModule } from './database/database.module';
 
 export class BaseModule {
     protected response: BaseResponse;
     protected spinner: ora;
     protected config: any;
     protected schematics: Schematics;
+    public database: DatabaseModule;
 
     constructor(spinner?: ora) {
         this.response = new BaseResponse();
         this.schematics = new Schematics();
+        this.database = new DatabaseModule();
+
         if (this.spinner) {
             this.spinner = spinner;
         }
@@ -76,6 +80,30 @@ export class BaseModule {
                 process.exit();
             }
         }
+    }
+
+    protected readFiles(dirname, onFileContent, onError) {
+        var isTheLastFile = false;
+        fs.readdir(dirname, function (err, filenames) {
+            if (err) {
+                onError(err);
+                return;
+            }
+            filenames.forEach(function (filename, index) {
+                fs.readFile(dirname + filename, 'utf-8', function (err, content) {
+                    if (err) {
+                        onError(err);
+                        return;
+                    }
+
+                    if(index == filenames.length - 1){
+                        isTheLastFile = true;
+                    }
+                    
+                    onFileContent(filename, content, isTheLastFile);
+                });
+            });
+        });
     }
 
 }

@@ -47,6 +47,11 @@ export class Schematics {
                 content: modelHandlerTemplate(projectName)
             },
             {
+                file: 'Models/ViewModels/empty.cs',
+                create: true,
+                content: ''
+            },
+            {
                 file: 'Models/Attributes/Attributes.cs',
                 create: true,
                 content: dateAttributesTemplate(projectName)
@@ -98,6 +103,10 @@ export class Schematics {
             },
             {
                 file: 'Controllers/ValuesController.cs',
+                delete: true
+            },
+            {
+                file: 'Models/ViewModels/empty.cs',
                 delete: true
             },
             {
@@ -323,11 +332,75 @@ export class Schematics {
 
         if (replacementIndex) {
             dataToAdd = dataToAdd.replace(/\r?\n|\r/g, '');
-            array[replacementIndex] = array[replacementIndex].replace('/>',' ' + dataToAdd + ' />');
+            array[replacementIndex] = array[replacementIndex].replace('/>', ' ' + dataToAdd + ' />');
         }
 
         return array.join('\n');
     }
+
+    addDataToClassBody(fileData: string, dataToAdd: string): string {
+        var array = fileData.split('\n');
+
+        var count = 0;
+        var lineIndex;
+        for (let index = array.length - 1; index > 0; index--) {
+            
+            if(array[index].indexOf('}') > -1) {
+                count += 1;
+                lineIndex = index;
+            }
+
+            if(count == 2) {
+                break;
+            }
+        }
+
+        if(lineIndex){
+            array.splice(lineIndex, 0, dataToAdd);
+        }
+
+        return array.join('\n');
+    }
+
+    /**
+     * 
+     * @param data file data
+     * @param matchBefore string to matches before the strin you are looking for 
+     * @param matchAfter string that matches after the string you are looking for
+     * @example you want to find "competence" that has [table("competence")],
+     * '[table("' <- woul be the "matchBefore" and '")]" would be the "matchAfter"
+     */
+    getStringBetween(data: string, matchBefore: string, matchAfter: string): string {
+        var array = data.split('\n');
+        var searchString = null;
+        var line = array.find((line) => line.indexOf(matchBefore) > -1 && line.indexOf(matchAfter) > -1);
+
+        if (line) {
+            var matchBeforePosition = line.indexOf(matchBefore);
+
+            searchString = line.substring(matchBeforePosition + matchBefore.length);
+
+            var matchAfterPosition = searchString.indexOf(matchAfter);
+            searchString = searchString.substring(0, matchAfterPosition);
+        }
+
+        return searchString;
+    }
+
+    getStringAfter(data: string, matchBefore: string): string {
+        var array = data.split('\n');
+        var searchString = null;
+        var line = array.find((line) => line.indexOf(matchBefore) > -1);
+
+        if (line) {
+            var matchBeforePosition = line.indexOf(matchBefore);
+
+            searchString = line.substring(matchBeforePosition + matchBefore.length);
+        }
+
+        return searchString;
+    }
+
 
 
 }

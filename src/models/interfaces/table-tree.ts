@@ -15,5 +15,7 @@ export interface TableTree {
      */
     references: Array<TableForeignKeyReference>;
     
-    middleTables: Array<TableTree>;
+    middleTables: Array<TableForeignKeyReference>;
+
+    isMiddleTable: boolean;
 }

@@ -23,6 +23,11 @@ return `{
         "main":"/Models/Database/",
         "suffixExtension":".cs"
     },
+    "viewModelPath": {
+        "interfaces": "",
+        "main":"/Models/ViewModels/",
+        "suffixExtension":"VM.cs"
+    },
     "connectionPath": {
         "path": "/appsettings.json",
         "property": "ConnectionStrings.DefaultConnection"

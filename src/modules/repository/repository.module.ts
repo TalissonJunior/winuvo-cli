@@ -15,6 +15,19 @@ export class RepositoryModule extends BaseModule {
     create(name: string , modelName: string, callback: BaseCallback): void {
         modelName = modelName.replace(/Repository/g, '');
 
+        this.createRepository(name, modelName, (response) => {
+
+            if(response.data){
+                callback(this.response.setData(response.data));
+            }
+            else{
+                callback(response);
+            }
+        });
+    }
+
+    createRepository(name: string , modelName: string, callback: BaseCallback) {
+
         var modelPath = path.join(process.cwd(), this.config['modelPath']['main']);
         var repositoryInterfacesPath = path.join(process.cwd(), this.config['repositoryPath']['interfaces']);
         var repositoryPath = path.join(process.cwd(), this.config['repositoryPath']['main']);

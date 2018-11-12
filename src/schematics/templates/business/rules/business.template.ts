@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using ${projectName}.Repository.Interfaces;
 using ${projectName}.Repository.Repositories;
 using ${projectName}.Models.Database;
+using ${projectName}.Models.ViewModels;
 using ${projectName}.Business.Interfaces;
 using ${projectName}.Business.Utilities;
 using System.Text;

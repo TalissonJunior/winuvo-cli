@@ -1,6 +1,6 @@
 import { TableTree } from "./table-tree";
 
-export interface TableForeignKeyReference {
+export class TableForeignKeyReference {
     /**
      * Column name of the table that is a foreign key
      */
@@ -13,6 +13,6 @@ export interface TableForeignKeyReference {
      * Column nameof the referenced table 
      */
     foreignKeyReferenceTableColumnName: string;
-    
+
     referencedTable: TableTree;
 }
