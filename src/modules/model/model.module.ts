@@ -214,12 +214,9 @@ export class ModelModule extends BaseModule {
         });
 
         modelsList.forEach((name, index) => {
-            content += `public List<${ValidateService.capitalizeFirstLetter(name)}> ${pluralize.plural(ValidateService.lowercaseFirstLetter(name))} { get; set; }`;
+            content += `${N + T + T}public List<${ValidateService.capitalizeFirstLetter(name)}> ${pluralize.plural(ValidateService.lowercaseFirstLetter(name))} { get; set; }`;
 
             if (index < models.length - 1) {
-                content += N + N;
-            }
-            else {
                 content += N;
             }
         });

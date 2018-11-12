@@ -472,8 +472,6 @@ export class DatabaseModule {
      * @param table 
      */
     private _isTheMiddleTable(table: Table) {
-
-
         var primaryAndForeignFiedKeys = table.columns.filter((column) => column.Key == 'MUL');
 
         if ((primaryAndForeignFiedKeys.length == 3 || primaryAndForeignFiedKeys.length == 2)) {
