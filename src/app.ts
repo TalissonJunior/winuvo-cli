@@ -54,8 +54,8 @@ class App {
                     this.newCommand.spinner.fail();
                     Log.error("Invalid type of project");
                 }
-                
-                if(!options.connectionString){
+
+                if (!options.connectionString) {
                     this.newCommand.spinner.fail();
                     Log.error('You must provide a connection string, use the flag "--connectionString=your-connection-string" to set it.');
                 }
@@ -137,7 +137,7 @@ class App {
 
                         name = ValidateService.capitalizeFirstLetter(name);
                         options.model = options.model != null ? ValidateService.capitalizeFirstLetter(options.model) : name;
-                    
+
                         this.generateCommand.spinner.text = `Generating repository ${name}...`;
 
                         this.generateCommand.generateRepository(name, options.model, (response) => {
@@ -235,63 +235,38 @@ class App {
 
                         this.generateCommand.generateModel(modelOptions, (response) => {
 
-                            if (response.data) {
+                            this.generateCommand.spinner.clear();
+                            Log.log(response.data);
+
+                            this.generateCommand.spinner.text = `Generating repository ${name}...`;
+                            this.generateCommand.generateRepository(name, options.model, (response) => {
+
                                 this.generateCommand.spinner.clear();
                                 Log.log(response.data);
 
-                                this.generateCommand.spinner.text = `Generating repository ${name}...`;
-                                this.generateCommand.generateRepository(name, options.model, (response) => {
+                                this.generateCommand.spinner.text = `Generating business ${name}...`;
+                                this.generateCommand.generateBusiness(name, options.model, (response) => {
 
-                                    if (response.data) {
-                                        this.generateCommand.spinner.clear();
-                                        Log.log(response.data);
+                                    this.generateCommand.spinner.clear();
+                                    Log.log(response.data);
 
-                                        this.generateCommand.spinner.text = `Generating business ${name}...`;
-                                        this.generateCommand.generateBusiness(name, options.model, (response) => {
+                                    this.generateCommand.spinner.text = `Generating controller ${name}...`;
+                                    this.generateCommand.generateController(name, options.model, (response) => {
 
-                                            if (response.data) {
-                                                this.generateCommand.spinner.clear();
-                                                Log.log(response.data);
+                                        if (response.data) {
+                                            this.generateCommand.spinner.clear();
+                                            Log.log(response.data);
+                                        }
+                                        else {
+                                            this.generateCommand.spinner.text = response.error.code;
+                                            this.generateCommand.spinner.fail();
+                                            Log.highlightError(response.error.message);
+                                        }
 
-                                                this.generateCommand.spinner.text = `Generating controller ${name}...`;
-                                                this.generateCommand.generateController(name,options.model, (response) => {
-
-                                                    if (response.data) {
-                                                        this.generateCommand.spinner.clear();
-                                                        Log.log(response.data);
-                                                    }
-                                                    else {
-                                                        this.generateCommand.spinner.text = response.error.code;
-                                                        this.generateCommand.spinner.fail();
-                                                        Log.highlightError(response.error.message);
-                                                    }
-
-                                                    process.exit();
-                                                });
-                                            }
-                                            else {
-                                                this.generateCommand.spinner.text = response.error.code;
-                                                this.generateCommand.spinner.fail();
-                                                Log.highlightError(response.error.message);
-                                                process.exit();
-                                            }
-                                        });
-                                    }
-                                    else {
-                                        this.generateCommand.spinner.text = response.error.code;
-                                        this.generateCommand.spinner.fail();
-                                        Log.highlightError(response.error.message);
                                         process.exit();
-                                    }
+                                    });
                                 });
-                            }
-                            else {
-                                this.generateCommand.spinner.text = response.error.code;
-                                this.generateCommand.spinner.fail();
-                                Log.highlightError(response.error.message);
-                                process.exit();
-                            }
-
+                            });
                         });
                     }
                 }

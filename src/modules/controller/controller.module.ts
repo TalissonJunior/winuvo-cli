@@ -68,10 +68,13 @@ export class ControllerModule extends BaseModule {
             var viewModelInsertFullAllName = this.schematics.getStringBetween(fileData, 'insertFullAll(', 'models)');
             var viewModelGetAllFullName = fileData.indexOf('getAllFull');
             var viewModelGetFullByIdName = fileData.indexOf('getFullById');
+            var viewModelEditFullName = this.schematics.getStringBetween(fileData, 'editFull(', 'model)');
+            var viewModelEditFullAlllName = this.schematics.getStringBetween(fileData, 'editFullAll(', 'models)');
             var fileData = '';
+            var template = '';
 
             if (viewModelGetAllFullName > -1) {
-                var template = this._generateGetAllFullTemplate();
+                template = this._generateGetAllFullTemplate();
 
                 fileData = fs.readFileSync(controllerPathWithNameAndExtension, 'utf8');
 
@@ -82,7 +85,7 @@ export class ControllerModule extends BaseModule {
             }
 
             if (viewModelGetFullByIdName > -1) {
-                var template = this._generateGetFullByIdTemplate();
+                template = this._generateGetFullByIdTemplate();
 
                 fileData = fs.readFileSync(controllerPathWithNameAndExtension, 'utf8');
 
@@ -112,6 +115,28 @@ export class ControllerModule extends BaseModule {
             }
             else {
                 callback(this.response.setError('Fail to generate "insertFullAll" method', `Could not find "insertFullAll" method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
+            }
+
+            if (viewModelEditFullName) {
+                var editFullMethodTemplate = this._generateEditFullTemplate(viewModelEditFullName);
+
+                fileData = fs.readFileSync(controllerPathWithNameAndExtension, 'utf8');
+
+                this.schematics.createFile(controllerPathWithNameAndExtension, this.schematics.addDataToClassBody(fileData, editFullMethodTemplate));
+            }
+            else {
+                callback(this.response.setError('Fail to generate "editFull" method', `Could not find "editFull" method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
+            }
+
+            if (viewModelEditFullAlllName) {
+                var editFullAllMethodTemplate = this._generateEditFullAllTemplate(viewModelEditFullAlllName);
+
+                fileData = fs.readFileSync(controllerPathWithNameAndExtension, 'utf8');
+
+                this.schematics.createFile(controllerPathWithNameAndExtension, this.schematics.addDataToClassBody(fileData, editFullAllMethodTemplate));
+            }
+            else {
+                callback(this.response.setError('Fail to generate "editFullAll" method', `Could not find "editFullAll" method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
             }
 
             callback(this.response.setData(true));
@@ -191,6 +216,54 @@ export class ControllerModule extends BaseModule {
             T + T + T + T}));${N +
             T + T + T}}${N + N +
             T + T + T}return _business.insertFullAll(models);${N +
+            T + T}}`;
+
+        return templateContent;
+    }
+
+    private _generateEditFullTemplate(viewModelName: string): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        var templateContent = `${N + T + T}[HttpPut("full")]${N}`;
+
+        templateContent += `${T + T}public ActionResult<BaseResponse> editFull([FromBody] ${viewModelName.trim()} model)${N}`;
+
+        templateContent += `${
+            T + T}{${N +
+            T + T + T}if (!ModelState.IsValid)${N +
+            T + T + T}{${N +
+            T + T + T + T}return BadRequest(new BaseResponse().setError(${N +
+            T + T + T + T + T}BaseResponseCode.BAD_REQUEST,${N +
+            T + T + T + T + T}string.Join("; ", ModelState.Values${N +
+            T + T + T + T + T + T}.SelectMany(x => x.Errors)${N +
+            T + T + T + T + T + T}.Select(x => x.ErrorMessage))${N +
+            T + T + T + T}));${N +
+            T + T + T}}${N + N +
+            T + T + T}return _business.editFull(model);${N +
+            T + T}}`;
+
+        return templateContent;
+    }
+
+    private _generateEditFullAllTemplate(viewModelName: string): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        var templateContent = `${N + T + T}[HttpPut("full/all")]${N}`;
+
+        templateContent += `${T + T}public ActionResult<BaseResponse> editFullAll([FromBody] ${viewModelName.trim()} models)${N}`;
+
+        templateContent += `${
+            T + T}{${N +
+            T + T + T}if (!ModelState.IsValid)${N +
+            T + T + T}{${N +
+            T + T + T + T}return BadRequest(new BaseResponse().setError(${N +
+            T + T + T + T + T}BaseResponseCode.BAD_REQUEST,${N +
+            T + T + T + T + T}string.Join("; ", ModelState.Values${N +
+            T + T + T + T + T + T}.SelectMany(x => x.Errors)${N +
+            T + T + T + T + T + T}.Select(x => x.ErrorMessage))${N +
+            T + T + T + T}));${N +
+            T + T + T}}${N + N +
+            T + T + T}return _business.editFullAll(models);${N +
             T + T}}`;
 
         return templateContent;

@@ -150,13 +150,17 @@ export class BusinessModule extends BaseModule {
                                         var businessInsertFullTemplate = this._generateInsertFullTemplate(viewModelName, modelTableTree, modelsGenerated.data);
                                         var businessInsertFullInterfaceTemplate = this._generateInsertFullInterfaceTemplate(viewModelName);
                                         var businessInsertFullAllTemplate = this._generateInsertFullAllTemplate(viewModelName);
-                                        var businessInsertFullAllInterfaceTemplate = this._generateInsertFullAllInterfaceTemplate(viewModelName);  
+                                        var businessInsertFullAllInterfaceTemplate = this._generateInsertFullAllInterfaceTemplate(viewModelName);
                                         var businessGetFullAllTemplate = this._generateGetFullAllTemplate();
                                         var businessGetFullAllInterfaceTemplate = this._generateGetFullAllInterfaceTemplate();
                                         var businessGetFullByIdTemplate = this._generateGetFullByIDTemplate(modelTableTree);
                                         var businessGetFullByIdInterfaceTemplate = this._generateGetFullByIdInterfaceTemplate(modelTableTree);
-                                        
-                                        var repositoryGetFullAllHelperTemplate = this.repositoryModule.createGetFullAllHelperTemplate(viewModelName, modelTableTree);
+                                        var businessEditFullTemplate = this._generateEditFullTemplate(viewModelName, modelTableTree);
+                                        var businessEditFullInterfaceTemplate = this._generateEditFullInterfaceTemplate(viewModelName);
+                                        var businessEditFullAllTemplate = this._generateEditFullAllTemplate(viewModelName);
+                                        var businessEditFullAllInterfaceTemplate = this._generateEditFullAllInterfaceTemplate(viewModelName);
+
+                                        var repositoryGetFullAllHelperTemplate = this.repositoryModule.createGetFullHelperTemplate(viewModelName, modelTableTree);
                                         var repositoryGetFullAllTemplate = this.repositoryModule.createGetFullAllTemplate(viewModelName, modelTableTree);
                                         var repositoryGetFullByIdTemplate = this.repositoryModule.createGetFullByIdTemplate(viewModelName, modelTableTree);
                                         var repositoryGetFullAllInterfaceTemplate = this.repositoryModule.createGetFullAllInterfaceTemplate(viewModelName);
@@ -172,6 +176,9 @@ export class BusinessModule extends BaseModule {
                                         var repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
                                         var repositoryFileInterfaceData = fs.readFileSync(repositoryFileIterfacePath, 'utf8');
 
+                                        // Create middle table Methods
+                                        this.repositoryModule.createMiddleTableMethodsTemplate(modelTableTree);
+
                                         // Get Full All Repository
                                         this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllTemplate));
                                         this.schematics.createFile(repositoryFileIterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositoryGetFullAllInterfaceTemplate));
@@ -181,7 +188,7 @@ export class BusinessModule extends BaseModule {
                                         repositoryFileInterfaceData = fs.readFileSync(repositoryFileIterfacePath, 'utf8');
                                         this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullByIdTemplate));
                                         this.schematics.createFile(repositoryFileIterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositortGetFullByIdInterfaceTemplate));
-                                        
+
                                         // Get Full All Helper Repository
                                         repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
                                         this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllHelperTemplate));
@@ -208,6 +215,18 @@ export class BusinessModule extends BaseModule {
                                         this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullAllTemplate));
                                         this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullAllInterfaceTemplate));
 
+                                        // Edit Full Business
+                                        businessFileData = fs.readFileSync(businessFilePath, 'utf8');
+                                        businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
+                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessEditFullTemplate));
+                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullInterfaceTemplate));
+
+                                        // Edit Full All Business
+                                        businessFileData = fs.readFileSync(businessFilePath, 'utf8');
+                                        businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
+                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessEditFullAllTemplate));
+                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullAllInterfaceTemplate));
+
                                         callback(this.response.setData(true));
                                     });
                                 });
@@ -233,16 +252,16 @@ export class BusinessModule extends BaseModule {
         const N = "\n"; //Break line
         const T = "\t"; //Tab line
         return `${T + T}public BaseResponse getAllFull()${N +
-        T + T}{${N +
-        T + T + T}try${N +
-        T + T + T}{${N +
-        T + T + T + T}return _baseResponse.setData(_repository.getAllFull().Result);${N +
-        T + T + T}}${N +
-        T + T + T}catch (Exception e)${N +
-        T + T + T}{${N +
-        T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
-        T + T + T}}${N +
-        T + T}}${N}`;
+            T + T}{${N +
+            T + T + T}try${N +
+            T + T + T}{${N +
+            T + T + T + T}return _baseResponse.setData(_repository.getAllFull().Result);${N +
+            T + T + T}}${N +
+            T + T + T}catch (Exception e)${N +
+            T + T + T}{${N +
+            T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
+            T + T + T}}${N +
+            T + T}}${N}`;
     }
 
     private _generateGetFullByIDTemplate(modelTableTree: TableTree): string {
@@ -253,28 +272,26 @@ export class BusinessModule extends BaseModule {
         tableIdType = tableIdType.indexOf('int') > -1 ? 'int' : 'long';
 
         return `${T + T}public BaseResponse getFullById(${tableIdType} ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}ID)${N +
-        T + T}{${N +
-        T + T + T}try${N +
-        T + T + T}{${N +
-        T + T + T + T}return _baseResponse.setData(_repository.getFullById(${ValidateService.lowercaseFirstLetter(modelTableTree.name)}ID).Result);${N +
-        T + T + T}}${N +
-        T + T + T}catch (Exception e)${N +
-        T + T + T}{${N +
-        T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
-        T + T + T}}${N +
-        T + T}}${N}`;
+            T + T}{${N +
+            T + T + T}try${N +
+            T + T + T}{${N +
+            T + T + T + T}return _baseResponse.setData(_repository.getFullById(${ValidateService.lowercaseFirstLetter(modelTableTree.name)}ID).Result);${N +
+            T + T + T}}${N +
+            T + T + T}catch (Exception e)${N +
+            T + T + T}{${N +
+            T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
+            T + T + T}}${N +
+            T + T}}${N}`;
     }
 
     private _generateGetFullAllInterfaceTemplate(): string {
-        const N = "\n"; //Break line
         const T = "\t"; //Tab line
         return `${T + T} BaseResponse getAllFull();`;
     }
 
     private _generateGetFullByIdInterfaceTemplate(modelTableTree: TableTree): string {
-        const N = "\n"; //Break line
         const T = "\t"; //Tab line
-        
+
         var tableIdType = modelTableTree.columns.find((row) => row.Field.toLowerCase() == 'id').Type;
         tableIdType = tableIdType.indexOf('int') > -1 ? 'int' : 'long';
 
@@ -282,7 +299,6 @@ export class BusinessModule extends BaseModule {
     }
 
     private _generateInsertFullInterfaceTemplate(viewModelName: string): string {
-        const N = "\n"; //Break line
         const T = "\t"; //Tab line
         return `${T + T} BaseResponse insertFull(${viewModelName}VM model);`;
     }
@@ -326,7 +342,12 @@ export class BusinessModule extends BaseModule {
             methodContent += N;
         }
 
-        methodContent += `${T + T + T + T}long id = _repository.insert(model.ConvertTo<${ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
+        if(modelTableTree.middleTables.length > 0){
+            methodContent += `${T + T + T + T}long id = _repository.insert(model.ConvertTo<${ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
+        }
+        else{
+            methodContent += `${T + T + T + T}_repository.insert(model.ConvertTo<${ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
+        }
 
         // Models List
         modelTableTree.middleTables.forEach((middleTable) => {
@@ -372,12 +393,12 @@ export class BusinessModule extends BaseModule {
         return methodContent;
     }
 
-    private _generateInsertFullAllInterfaceTemplate(viewModelName: string, ): string {
+    private _generateInsertFullAllInterfaceTemplate(viewModelName: string): string {
         const T = "\t"; //Tab line
         return `${T + T} BaseResponse insertFullAll(List<${viewModelName}VM> models);`;
     }
 
-    private _generateInsertFullAllTemplate(viewModelName: string, ): string {
+    private _generateInsertFullAllTemplate(viewModelName: string): string {
         const N = "\n"; //Break line
         const T = "\t"; //Tab line
         var template = `${T + T}public BaseResponse insertFullAll(List<${viewModelName}VM> models)${N}`;
@@ -399,4 +420,117 @@ export class BusinessModule extends BaseModule {
 
         return template;
     }
+
+    private _generateEditFullInterfaceTemplate(viewModelName: string): string {
+        const T = "\t"; //Tab line
+        return `${T + T} BaseResponse editFull(${viewModelName}VM model);`;
+    }
+
+    private _generateEditFullTemplate(viewModelName: string, modelTableTree: TableTree): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        var methodContent = `${N + T + T}public BaseResponse editFull(${viewModelName}VM model) ${N + T + T}{${N}`;
+
+        // Models object
+        modelTableTree.references.forEach((table) => {
+            var tableNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.name);
+            var tableNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.name);
+
+            methodContent += `${T + T + T}${tableNameUpper}Repository _${tableNameLower}Repository = new ${tableNameUpper}Repository(_configuration);${N}`;
+        });
+
+        // Middle tables object
+        modelTableTree.middleTables.forEach((table) => {
+            var tableNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var tableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+
+            methodContent += `${T + T + T}${tableNameUpper}Repository _${tableNameLower}Repository = new ${tableNameUpper}Repository(_configuration);${N}`;
+        });
+
+        methodContent += `${N + T + T + T}try ${N + T + T + T}{${N}`;
+
+        // Models object
+        modelTableTree.references.forEach((table) => {
+            var tableNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.name);
+
+            methodContent += `${T + T + T + T}if (model.${tableNameLower}.id > 0){${N}`;
+            methodContent += `${T + T + T + T + T} _${tableNameLower}Repository.update(model.${tableNameLower});${N}`;
+            methodContent += `${T + T + T + T}}${N}`;
+            methodContent += `${T + T + T + T}else {${N}`;
+            methodContent += `${T + T + T + T + T} _${tableNameLower}Repository.insert(model.${tableNameLower});${N}`;
+            methodContent += `${T + T + T + T}}${N + N}`;
+
+            methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${tableNameLower}.${table.foreignKeyReferenceTableColumnName};${N}`;
+        });
+
+        methodContent += `${T + T + T + T}_repository.update(model.ConvertTo<${ValidateService.capitalizeFirstLetter(modelTableTree.name)}>());${N + N}`;
+
+        // List tables object
+        modelTableTree.middleTables.forEach((table) => {
+            var middleTableNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var middleTableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var listModelNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
+
+            methodContent += `${T + T + T + T}if (model.${pluralize.plural(listModelNameLower)}.Count > 0)${N}`;
+            methodContent += `${T + T + T + T}{${N}`;
+            methodContent += `${T + T + T + T + T}List<${middleTableNameUpper}> list${middleTableNameUpper} = _${middleTableNameLower}Repository.getAllBy${ValidateService.capitalizeFirstLetter(modelTableTree.name)}Id(model.id);${N}`;
+            methodContent += `${T + T + T + T + T}if(list${middleTableNameUpper}.Count > 0) {${N}`;
+            methodContent += `${T + T + T + T + T + T}List<${middleTableNameUpper}> list${middleTableNameUpper}ToDelete = list${middleTableNameUpper}.Where((${middleTableNameLower}) => model.${pluralize.plural(listModelNameLower)}.Select((${listModelNameLower}) => ${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} != ${middleTableNameLower}.${table.referencedTable.references[0].foreignKeyColumnName}) != null).ToList();${N}`;
+            methodContent += `${T + T + T + T + T + T}_${middleTableNameLower}Repository.delete(list${middleTableNameUpper}ToDelete);${N}`;
+            methodContent += `${T + T + T + T + T}}${N + N}`;
+
+            methodContent += `${T + T + T + T + T}model.${pluralize.plural(listModelNameLower)}.ForEach((${listModelNameLower}) => {${N + N}`;
+            methodContent += `${T + T + T + T + T + T}${middleTableNameUpper} ${middleTableNameLower} = new ${middleTableNameUpper}() {${N}`;
+            methodContent += `${T + T + T + T + T + T + T}${table.referencedTable.references[0].foreignKeyColumnName} = ${table.referencedTable.references[0].referencedTable.name}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName},${N}`;
+            methodContent += `${T + T + T + T + T + T + T}${table.foreignKeyReferenceTableColumnName} = model.${table.foreignKeyColumnName}${N}`;
+            methodContent += `${T + T + T + T + T + T}};${N + N}`;
+
+            methodContent += `${T + T + T + T + T + T}_${middleTableNameLower}Repository.insert(${middleTableNameLower});${N}`;
+            methodContent += `${T + T + T + T + T}});${N + N}`;
+
+            methodContent += `${T + T + T + T}}${N}`;
+            methodContent += `${T + T + T + T}else {${N}`;
+            methodContent += `${T + T + T + T + T}_${middleTableNameLower}Repository.deleteAllBy${ValidateService.capitalizeFirstLetter(modelTableTree.name)}Id(model.id);${N}`;
+            methodContent += `${T + T + T + T}}${N + N}`;
+        });
+
+        methodContent += `${T + T + T + T}return _baseResponse.setData(true);${N}`;
+        methodContent += `${T + T + T}}${N}`;
+        methodContent += `${T + T + T}catch (Exception e)${N}`;
+        methodContent += `${T + T + T}{${N}`;
+        methodContent += `${T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N}`;
+        methodContent += `${T + T + T}}${N}`;
+        methodContent += `${T + T}}${N}`;
+
+        return methodContent;
+    }
+
+    private _generateEditFullAllInterfaceTemplate(viewModelName: string): string {
+        const T = "\t"; //Tab line
+        return `${T + T} BaseResponse editFullAll(List<${viewModelName}VM> models);`;
+    }
+
+    private _generateEditFullAllTemplate(viewModelName: string): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        var template = `${T + T}public BaseResponse editFullAll(List<${viewModelName}VM> models)${N}`;
+
+        template += `${T + T}{${N +
+            T + T + T}try${N +
+            T + T + T}{${N +
+            T + T + T + T}models.ForEach(model =>${N +
+            T + T + T + T}{${N +
+            T + T + T + T + T}editFull(model);${N +
+            T + T + T + T}});${N +
+            T + T + T + T}return _baseResponse.setData(true);${N +
+            T + T + T}}${N +
+            T + T + T}catch (Exception e)${N +
+            T + T + T}{${N +
+            T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
+            T + T + T}}${N +
+            T + T}}`;
+
+        return template;
+    }
+
 }

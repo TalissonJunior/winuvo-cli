@@ -27,10 +27,6 @@ export class ModelModule extends BaseModule {
 
             if (databaseResponse.data) {
 
-                //REMOVE
-                fs.writeFileSync(path.join(process.cwd() + 'teste.json'), JSON.stringify(this.database.tablesTree));
-                //REMOVE
-
                 this.createModel(tableName, options.name, (response) => {
                     if (response.data) {
                         callback(this.response.setData((<ModelFileCreate>response.data).message));
@@ -245,7 +241,7 @@ export class ModelModule extends BaseModule {
             }
 
             if (column.Key == 'PRI') {
-                content += `[PrimaryKey]`;
+                content += `[Key, PrimaryKey]`;
             }
             else if (column.Null == 'NO' && (!validCreatedDateFields[column.Field] && !validUpdatedDateFields[column.Field])) {
                 content += `${T + T}[Required(ErrorMessage = "${column.Field} is required")]`;
