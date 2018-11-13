@@ -5,6 +5,7 @@ export const iRepositoryTemplate = (projectName: string, className: string, mode
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ${projectName}.Models.Database;
+using ${projectName}.Models.ViewModels;
 
 namespace ${projectName}.Repository.Interfaces
 {

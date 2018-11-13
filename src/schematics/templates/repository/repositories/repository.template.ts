@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using ${projectName}.Repository.Interfaces;
 using ${projectName}.Models.Database;
+using ${projectName}.Models.ViewModels;
 using System.Collections;
 using System.Linq;
 

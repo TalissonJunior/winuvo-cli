@@ -40,7 +40,6 @@ export class BusinessModule extends BaseModule {
         var businessInterfaceExtension = 'I' + ValidateService.capitalizeFirstLetter(name) + this.config['businessPath']['suffixExtension'];
         var businessNameWithExtension = ValidateService.capitalizeFirstLetter(name) + this.config['businessPath']['suffixExtension'];
 
-
         if (!fs.existsSync(path.join(modelPath, modelNameWithExtension))) {
             callback(this.response.setError('Couldn´t find model', `Coudn´t find a model with the name ${modelName} at ${path.join(modelPath, modelNameWithExtension)}`));
         }
@@ -71,7 +70,7 @@ export class BusinessModule extends BaseModule {
                             response = `<create/> ${path.join(businessInterfacesPath, businessInterfaceExtension)}\n<create/> ${path.join(businessPath, businessNameWithExtension)}`;
                         }
 
-                        this._generateInsertFullMethod(businessNameWithExtension, modelName, () => {
+                        this._generateFullMethods(businessNameWithExtension, modelName, name, () => {
                             callback(this.response.setData(response));
                         });
                     });
@@ -94,7 +93,7 @@ export class BusinessModule extends BaseModule {
         return businessTemplate(this.config['Project']['name'], className, modelName);
     }
 
-    private _generateInsertFullMethod(fileNameWithExtension: string, modelName: string, callback: BaseCallback) {
+    private _generateFullMethods(fileNameWithExtension: string, modelName: string, fileName: string, callback: BaseCallback) {
 
         this.database.connect(null, (response) => {
             this.modelModule.database.tablesTree = _.cloneDeep(this.database.tablesTree);
@@ -148,27 +147,66 @@ export class BusinessModule extends BaseModule {
                                     });
 
                                     Promise.all(repositoryPromises).then(() => {
-                                        var insertFullTemplate = this._generateInsertFullTemplate(viewModelName, modelTableTree, modelsGenerated.data);
-                                        var insertFullInterfaceTemplate = this._generateInsertFullInterfaceTemplate(viewModelName);
-                                        var insertFullAllTemplate = this._generateInsertFullAllTemplate(viewModelName);
-                                        var insertFullAllInterfaceTemplate = this._generateInsertFullAllInterfaceTemplate(viewModelName);
-
-                                        var filePath = path.join(process.cwd(), this.config['businessPath']['main'], fileNameWithExtension);
-                                        var fileInterfacePath = path.join(process.cwd(), this.config['businessPath']['interfaces'], 'I' + fileNameWithExtension);
-
-                                        var fileData = fs.readFileSync(filePath, 'utf8');
-                                        var fileInterfaceData = fs.readFileSync(fileInterfacePath, 'utf8');
+                                        var businessInsertFullTemplate = this._generateInsertFullTemplate(viewModelName, modelTableTree, modelsGenerated.data);
+                                        var businessInsertFullInterfaceTemplate = this._generateInsertFullInterfaceTemplate(viewModelName);
+                                        var businessInsertFullAllTemplate = this._generateInsertFullAllTemplate(viewModelName);
+                                        var businessInsertFullAllInterfaceTemplate = this._generateInsertFullAllInterfaceTemplate(viewModelName);  
+                                        var businessGetFullAllTemplate = this._generateGetFullAllTemplate();
+                                        var businessGetFullAllInterfaceTemplate = this._generateGetFullAllInterfaceTemplate();
+                                        var businessGetFullByIdTemplate = this._generateGetFullByIDTemplate(modelTableTree);
+                                        var businessGetFullByIdInterfaceTemplate = this._generateGetFullByIdInterfaceTemplate(modelTableTree);
                                         
-                                        // Insert Full
-                                        this.schematics.createFile(filePath, this.schematics.addDataToClassBody(fileData, insertFullTemplate));
-                                        this.schematics.createFile(fileInterfacePath, this.schematics.addDataToClassBody(fileInterfaceData, insertFullInterfaceTemplate));
+                                        var repositoryGetFullAllHelperTemplate = this.repositoryModule.createGetFullAllHelperTemplate(viewModelName, modelTableTree);
+                                        var repositoryGetFullAllTemplate = this.repositoryModule.createGetFullAllTemplate(viewModelName, modelTableTree);
+                                        var repositoryGetFullByIdTemplate = this.repositoryModule.createGetFullByIdTemplate(viewModelName, modelTableTree);
+                                        var repositoryGetFullAllInterfaceTemplate = this.repositoryModule.createGetFullAllInterfaceTemplate(viewModelName);
+                                        var repositortGetFullByIdInterfaceTemplate = this.repositoryModule.createGetFullByIdInterfaceTemplate(viewModelName, modelTableTree);
 
-                                        fileData = fs.readFileSync(filePath, 'utf8');
-                                        fileInterfaceData = fs.readFileSync(fileInterfacePath, 'utf8');
+                                        var businessFilePath = path.join(process.cwd(), this.config['businessPath']['main'], fileNameWithExtension);
+                                        var businessFileInterfacePath = path.join(process.cwd(), this.config['businessPath']['interfaces'], 'I' + fileNameWithExtension);
+                                        var repositoryFilePath = path.join(process.cwd(), this.config['repositoryPath']['main'], ValidateService.capitalizeFirstLetter(fileName) + this.config['repositoryPath']['suffixExtension']);
+                                        var repositoryFileIterfacePath = path.join(process.cwd(), this.config['repositoryPath']['interfaces'], 'I' + ValidateService.capitalizeFirstLetter(fileName) + this.config['repositoryPath']['suffixExtension']);
 
-                                        // Insert Full All
-                                        this.schematics.createFile(filePath, this.schematics.addDataToClassBody(fileData, insertFullAllTemplate));
-                                        this.schematics.createFile(fileInterfacePath, this.schematics.addDataToClassBody(fileInterfaceData, insertFullAllInterfaceTemplate));
+                                        var businessFileData = fs.readFileSync(businessFilePath, 'utf8');
+                                        var businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
+                                        var repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
+                                        var repositoryFileInterfaceData = fs.readFileSync(repositoryFileIterfacePath, 'utf8');
+
+                                        // Get Full All Repository
+                                        this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllTemplate));
+                                        this.schematics.createFile(repositoryFileIterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositoryGetFullAllInterfaceTemplate));
+
+                                        // Get Full By ID Repository
+                                        repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
+                                        repositoryFileInterfaceData = fs.readFileSync(repositoryFileIterfacePath, 'utf8');
+                                        this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullByIdTemplate));
+                                        this.schematics.createFile(repositoryFileIterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositortGetFullByIdInterfaceTemplate));
+                                        
+                                        // Get Full All Helper Repository
+                                        repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
+                                        this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllHelperTemplate));
+
+                                        // Get Full All Business
+                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessGetFullAllTemplate));
+                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessGetFullAllInterfaceTemplate));
+
+                                        // Get Full By ID Business 
+                                        businessFileData = fs.readFileSync(businessFilePath, 'utf8');
+                                        businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
+                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessGetFullByIdTemplate));
+                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessGetFullByIdInterfaceTemplate));
+
+                                        // Insert Full Business
+                                        businessFileData = fs.readFileSync(businessFilePath, 'utf8');
+                                        businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
+                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullTemplate));
+                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullInterfaceTemplate));
+
+                                        // Insert Full All Business
+                                        businessFileData = fs.readFileSync(businessFilePath, 'utf8');
+                                        businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
+                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullAllTemplate));
+                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullAllInterfaceTemplate));
 
                                         callback(this.response.setData(true));
                                     });
@@ -191,7 +229,59 @@ export class BusinessModule extends BaseModule {
         });
     }
 
-    private _generateInsertFullInterfaceTemplate(viewModelName: string, ): string {
+    private _generateGetFullAllTemplate(): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        return `${T + T}public BaseResponse getAllFull()${N +
+        T + T}{${N +
+        T + T + T}try${N +
+        T + T + T}{${N +
+        T + T + T + T}return _baseResponse.setData(_repository.getAllFull().Result);${N +
+        T + T + T}}${N +
+        T + T + T}catch (Exception e)${N +
+        T + T + T}{${N +
+        T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
+        T + T + T}}${N +
+        T + T}}${N}`;
+    }
+
+    private _generateGetFullByIDTemplate(modelTableTree: TableTree): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+
+        var tableIdType = modelTableTree.columns.find((row) => row.Field.toLowerCase() == 'id').Type;
+        tableIdType = tableIdType.indexOf('int') > -1 ? 'int' : 'long';
+
+        return `${T + T}public BaseResponse getFullById(${tableIdType} ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}ID)${N +
+        T + T}{${N +
+        T + T + T}try${N +
+        T + T + T}{${N +
+        T + T + T + T}return _baseResponse.setData(_repository.getFullById(${ValidateService.lowercaseFirstLetter(modelTableTree.name)}ID).Result);${N +
+        T + T + T}}${N +
+        T + T + T}catch (Exception e)${N +
+        T + T + T}{${N +
+        T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
+        T + T + T}}${N +
+        T + T}}${N}`;
+    }
+
+    private _generateGetFullAllInterfaceTemplate(): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        return `${T + T} BaseResponse getAllFull();`;
+    }
+
+    private _generateGetFullByIdInterfaceTemplate(modelTableTree: TableTree): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        
+        var tableIdType = modelTableTree.columns.find((row) => row.Field.toLowerCase() == 'id').Type;
+        tableIdType = tableIdType.indexOf('int') > -1 ? 'int' : 'long';
+
+        return `${T + T} BaseResponse getFullById(${tableIdType} ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}ID);`;
+    }
+
+    private _generateInsertFullInterfaceTemplate(viewModelName: string): string {
         const N = "\n"; //Break line
         const T = "\t"; //Tab line
         return `${T + T} BaseResponse insertFull(${viewModelName}VM model);`;
@@ -225,14 +315,14 @@ export class BusinessModule extends BaseModule {
         // Models object
         modelTableTree.references.forEach((table) => {
             var tableNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.name);
-            
+
             var foreignKeyField = modelTableTree.columns.find(row => row.Field == table.foreignKeyReferenceTableColumnName);
             var castType = foreignKeyField.Type.indexOf('long') > -1 ? '' : '(int)';
 
             methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${tableNameLower}.${table.foreignKeyReferenceTableColumnName} > 0 ? model.${tableNameLower}.${table.foreignKeyReferenceTableColumnName} : ${castType}_${tableNameLower}Repository.insert(model.${tableNameLower});${N}`;
         });
 
-        if(modelTableTree.references.length > 0){
+        if (modelTableTree.references.length > 0) {
             methodContent += N;
         }
 
@@ -293,20 +383,20 @@ export class BusinessModule extends BaseModule {
         var template = `${T + T}public BaseResponse insertFullAll(List<${viewModelName}VM> models)${N}`;
 
         template += `${T + T}{${N +
-        T + T + T}try${N +
-        T + T + T}{${N +
-        T + T + T + T}models.ForEach(model =>${N +
-        T + T + T + T}{${N +
-        T + T + T + T + T}insertFull(model);${N +
-        T + T + T + T}});${N +
-        T + T + T + T}return _baseResponse.setData(true);${N +
-        T + T + T}}${N +
-        T + T + T}catch (Exception e)${N +
-        T + T + T}{${N +
-        T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
-        T + T + T}}${N +
-        T + T}}`;
-        
+            T + T + T}try${N +
+            T + T + T}{${N +
+            T + T + T + T}models.ForEach(model =>${N +
+            T + T + T + T}{${N +
+            T + T + T + T + T}insertFull(model);${N +
+            T + T + T + T}});${N +
+            T + T + T + T}return _baseResponse.setData(true);${N +
+            T + T + T}}${N +
+            T + T + T}catch (Exception e)${N +
+            T + T + T}{${N +
+            T + T + T + T}return _baseResponse.setError(BaseResponseCode.INTERNAL_SERVER_ERROR, e.Message);${N +
+            T + T + T}}${N +
+            T + T}}`;
+
         return template;
     }
 }

@@ -40,7 +40,7 @@ export class ControllerModule extends BaseModule {
         else {
             if (this.schematics.createFile(controllerPath, this._createControllerFileTemplate(name, modelName), controllerNameWithExtension)) {
 
-                this._generateInsertFullMethod(controllerNameWithExtension, businessInterfaceNameWithExtension, () => {
+                this._generateFullMethods(controllerNameWithExtension, businessInterfaceNameWithExtension, () => {
                     callback(this.response.setData(`<create/> ${path.join(controllerPath, controllerNameWithExtension)}`));
                 });
             }
@@ -52,7 +52,7 @@ export class ControllerModule extends BaseModule {
         }
     }
 
-    private _generateInsertFullMethod(controllerNameWithExtension: string, businessInterfaceNameWithExtension: string, callback: BaseCallback) {
+    private _generateFullMethods(controllerNameWithExtension: string, businessInterfaceNameWithExtension: string, callback: BaseCallback) {
 
         var businessInterfacePath = path.join(process.cwd(), this.config['businessPath']['interfaces']);
         var controllerPath = path.join(process.cwd(), this.config['controllerPath']['main']);
@@ -66,28 +66,52 @@ export class ControllerModule extends BaseModule {
 
             var viewModelName = this.schematics.getStringBetween(fileData, 'insertFull(', 'model)');
             var viewModelInsertFullAllName = this.schematics.getStringBetween(fileData, 'insertFullAll(', 'models)');
+            var viewModelGetAllFullName = fileData.indexOf('getAllFull');
+            var viewModelGetFullByIdName = fileData.indexOf('getFullById');
             var fileData = '';
 
-            if(viewModelName){
+            if (viewModelGetAllFullName > -1) {
+                var template = this._generateGetAllFullTemplate();
+
+                fileData = fs.readFileSync(controllerPathWithNameAndExtension, 'utf8');
+
+                this.schematics.createFile(controllerPathWithNameAndExtension, this.schematics.addDataToClassBody(fileData, template));
+            }
+            else {
+                callback(this.response.setError('Fail to generate "getAllFull" method', `Could not find "getAllFull" method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
+            }
+
+            if (viewModelGetFullByIdName > -1) {
+                var template = this._generateGetFullByIdTemplate();
+
+                fileData = fs.readFileSync(controllerPathWithNameAndExtension, 'utf8');
+
+                this.schematics.createFile(controllerPathWithNameAndExtension, this.schematics.addDataToClassBody(fileData, template));
+            }
+            else {
+                callback(this.response.setError('Fail to generate "getFullById" method', `Could not find "getFullById" method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
+            }
+            
+            if (viewModelName) {
                 var insertFullMethodTemplate = this._generateInsertFullTemplate(viewModelName);
 
                 fileData = fs.readFileSync(controllerPathWithNameAndExtension, 'utf8');
 
                 this.schematics.createFile(controllerPathWithNameAndExtension, this.schematics.addDataToClassBody(fileData, insertFullMethodTemplate));
             }
-            else{
-                callback(this.response.setError('Fail to generate insert full', `Could not insert full method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
+            else {
+                callback(this.response.setError('Fail to generate "insertFull" method', `Could not find "insertFull" method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
             }
 
-            if(viewModelInsertFullAllName) {
+            if (viewModelInsertFullAllName) {
                 var insertFullAllMethodTemplate = this._generateInsertFullAllTemplate(viewModelInsertFullAllName);
 
                 fileData = fs.readFileSync(controllerPathWithNameAndExtension, 'utf8');
 
                 this.schematics.createFile(controllerPathWithNameAndExtension, this.schematics.addDataToClassBody(fileData, insertFullAllMethodTemplate));
             }
-            else{
-                callback(this.response.setError('Fail to generate insert full all', `Could not insert full all method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
+            else {
+                callback(this.response.setError('Fail to generate "insertFullAll" method', `Could not find "insertFullAll" method at ${path.join(businessInterfacePath, businessInterfaceNameWithExtension)}`));
             }
 
             callback(this.response.setData(true));
@@ -96,6 +120,32 @@ export class ControllerModule extends BaseModule {
 
     private _createControllerFileTemplate(className: string, modelName: string): string {
         return controllerTemplate(this.config['Project']['name'], className, modelName);
+    }
+
+    private _generateGetAllFullTemplate(): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        var templateContent = `${T + T}[HttpGet("full")]${N}`;
+
+        templateContent += `${T + T}public BaseResponse getAllFull()${N +
+            T + T}{${N +
+            T + T + T}return _business.getAllFull();${N +
+            T + T}}${N}`;
+
+        return templateContent;
+    }
+
+    private _generateGetFullByIdTemplate(): string {
+        const N = "\n"; //Break line
+        const T = "\t"; //Tab line
+        var templateContent = `${T + T}[HttpGet("full/{id}")]${N}`;
+
+        templateContent += `${T + T}public BaseResponse getFullById(int id)${N +
+            T + T}{${N +
+            T + T + T}return _business.getFullById(id);${N +
+            T + T}}${N}`;
+
+        return templateContent;
     }
 
     private _generateInsertFullTemplate(viewModelName: string): string {
