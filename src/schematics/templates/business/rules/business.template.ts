@@ -12,6 +12,7 @@ using ${projectName}.Models.Database;
 using ${projectName}.Models.ViewModels;
 using ${projectName}.Business.Interfaces;
 using ${projectName}.Business.Utilities;
+using ${projectName}.Business.Enums;
 using System.Text;
 using System.Linq;
 

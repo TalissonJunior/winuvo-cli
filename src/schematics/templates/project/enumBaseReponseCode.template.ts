@@ -28,8 +28,6 @@ namespace ${projectName}.Business.Enums
         public static string AUTHENTICATE_INVALID_REFRESH_TOKEN = "auth/invalid-refresh-token";
         
         public static string BAD_REQUEST = "bad-request";
-
-        public static string NOT_DATA_TO_EXCLUDE = "no-data-to-exclude";
     }
 }`;
 };

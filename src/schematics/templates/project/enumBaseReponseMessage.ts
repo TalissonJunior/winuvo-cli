@@ -21,8 +21,6 @@ namespace ${projectName}.Business.Enums
 
         public static string BAD_REQUEST = "BAD REQUEST";
 
-        public static string NOT_DATA_TO_EXCLUDE = "No data to be excluded";
-
         public static string INVALID_TOKEN_AND_REFRESH_TOKEN = "You must provide a 'token' and 'refreshToken' property";
 
         public static string INVALID_PASSWORD_TOKEN = "You must provide a 'password' and 'token' property";

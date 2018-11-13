@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ${projectName}.Models.Database;
 
-namespace ${projectName}.ViewModels.Database
+namespace ${projectName}.Models.ViewModels
 {
     public class ${ValidateService.capitalizeFirstLetter(viewModelName)}VM : ${ValidateService.capitalizeFirstLetter(modelName)} 
     {
