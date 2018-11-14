@@ -55,7 +55,7 @@ namespace ${projectName}.Controllers
                 ));
             }
 
-            return _baseResponse.setData(_business.insertAsync(model));
+            return _baseResponse.setData(_business.insertAsync(model).Result);
         }
 
         [HttpPost("all")]
@@ -71,7 +71,7 @@ namespace ${projectName}.Controllers
                 ));
             }
             
-            return _baseResponse.setData(_business.insertAsync(models));
+            return _baseResponse.setData(_business.insertAsync(models).Result);
         }
 
         [HttpPut]
@@ -87,7 +87,7 @@ namespace ${projectName}.Controllers
                 ));
             }
 
-            return _baseResponse.setData(_business.updateAsync(model));
+            return _baseResponse.setData(_business.updateAsync(model).Result);
         }
 
         [HttpPut("all")]
@@ -103,7 +103,7 @@ namespace ${projectName}.Controllers
                 ));
             }
 
-            return _baseResponse.setData(_business.updateAsync(models));
+            return _baseResponse.setData(_business.updateAsync(models).Result);
         }
 
         [HttpDelete("{id}")]
@@ -117,7 +117,7 @@ namespace ${projectName}.Controllers
                 ));
             }
 
-            return _baseResponse.setData(_business.deleteAsync(new ${ValidateService.capitalizeFirstLetter(modelName)}() { id = id }));
+            return _baseResponse.setData(_business.deleteAsync(new ${ValidateService.capitalizeFirstLetter(modelName)}() { id = id }).Result);
         }
 
         [HttpPost("delete/all")]
@@ -125,7 +125,7 @@ namespace ${projectName}.Controllers
         {
             try
             {
-                return _baseResponse.setData(_business.deleteAsync(models));
+                return _baseResponse.setData(_business.deleteAsync(models).Result);
             }
             catch (Exception e)
             {

@@ -12,6 +12,7 @@ import { ModelModule } from '../model/model.module';
 import { RepositoryModule } from '../repository/repository.module';
 import { ModelFile } from '../../models/interfaces';
 import { TableTree } from '../../models/interfaces/table-tree';
+import { isRegExp } from 'util';
 
 export class BusinessModule extends BaseModule {
     schematics: Schematics;
@@ -129,6 +130,9 @@ export class BusinessModule extends BaseModule {
                         modelsToGenerate = modelsToGenerate.concat(_.clone(modelsList));
                     });
 
+                    // Remove duplicates
+                    modelsToGenerate = _.uniqBy(modelsToGenerate, (model) => model);
+
                     if (models.length > 0 || modelsList.length > 0) {
 
                         // Creating the models that doesn´t exits
@@ -138,9 +142,9 @@ export class BusinessModule extends BaseModule {
                             if (modelResponse.data) {
 
                                 // Creating the ViewModel;
-                                var viewModelName = ValidateService.transformStringToCamelCase(tableName + '_' + models.join('_') + '_' + modelsList.join('_'));
+                                var viewModelName = ValidateService.transformStringToCamelCase(tableName + '_' + modelTableTree.references.map((table) => ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)).join('_') + '_' + modelsList.join('_'));
 
-                                this.modelModule.createViewModel(viewModelName, tableName, models, modelsList, () => {
+                                this.modelModule.createViewModel(viewModelName, modelTableTree, () => {
 
                                     var repositoryPromises = [];
 
@@ -157,7 +161,7 @@ export class BusinessModule extends BaseModule {
                                     });
 
                                     Promise.all(repositoryPromises).then(() => {
-                                        var businessInsertFullTemplate = this._generateInsertFullTemplate(viewModelName, modelTableTree, modelsGenerated.data);
+                                        var businessInsertFullTemplate = this._generateInsertFullTemplate(viewModelName, modelTableTree);
                                         var businessInsertFullInterfaceTemplate = this._generateInsertFullInterfaceTemplate(viewModelName);
                                         var businessInsertFullAllTemplate = this._generateInsertFullAllTemplate(viewModelName);
                                         var businessInsertFullAllInterfaceTemplate = this._generateInsertFullAllInterfaceTemplate(viewModelName);
@@ -179,63 +183,104 @@ export class BusinessModule extends BaseModule {
                                         var businessFilePath = path.join(process.cwd(), this.config['businessPath']['main'], fileNameWithExtension);
                                         var businessFileInterfacePath = path.join(process.cwd(), this.config['businessPath']['interfaces'], 'I' + fileNameWithExtension);
                                         var repositoryFilePath = path.join(process.cwd(), this.config['repositoryPath']['main'], ValidateService.capitalizeFirstLetter(fileName) + this.config['repositoryPath']['suffixExtension']);
-                                        var repositoryFileIterfacePath = path.join(process.cwd(), this.config['repositoryPath']['interfaces'], 'I' + ValidateService.capitalizeFirstLetter(fileName) + this.config['repositoryPath']['suffixExtension']);
+                                        var repositoryFileInterfacePath = path.join(process.cwd(), this.config['repositoryPath']['interfaces'], 'I' + ValidateService.capitalizeFirstLetter(fileName) + this.config['repositoryPath']['suffixExtension']);
 
                                         var businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         var businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
                                         var repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
-                                        var repositoryFileInterfaceData = fs.readFileSync(repositoryFileIterfacePath, 'utf8');
+                                        var repositoryFileInterfaceData = fs.readFileSync(repositoryFileInterfacePath, 'utf8');
 
                                         // Create middle table Methods
                                         this.repositoryModule.createMiddleTableMethodsTemplate(modelTableTree);
 
                                         // Get Full All Repository
-                                        this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllTemplate));
-                                        this.schematics.createFile(repositoryFileIterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositoryGetFullAllInterfaceTemplate));
+                                        if(repositoryFileData.indexOf(repositoryGetFullAllTemplate) < 0){
+                                            this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllTemplate));
+                                        }
+                                        if(repositoryFileInterfaceData.indexOf(repositoryGetFullAllInterfaceTemplate) < 0){
+                                            this.schematics.createFile(repositoryFileInterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositoryGetFullAllInterfaceTemplate));
+                                        }
 
                                         // Get Full By ID Repository
                                         repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
-                                        repositoryFileInterfaceData = fs.readFileSync(repositoryFileIterfacePath, 'utf8');
-                                        this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullByIdTemplate));
-                                        this.schematics.createFile(repositoryFileIterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositortGetFullByIdInterfaceTemplate));
+                                        repositoryFileInterfaceData = fs.readFileSync(repositoryFileInterfacePath, 'utf8');
+
+                                        if(repositoryFileData.indexOf(repositoryGetFullByIdTemplate) < 0){
+                                            this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullByIdTemplate));
+                                        }
+                                        if(repositoryFileInterfaceData.indexOf(repositortGetFullByIdInterfaceTemplate) < 0){
+                                            this.schematics.createFile(repositoryFileInterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositortGetFullByIdInterfaceTemplate));
+                                        }
 
                                         // Get Full All Helper Repository
                                         repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
-                                        this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllHelperTemplate));
+                                        
+                                        if(repositoryFileData.indexOf(repositoryGetFullAllHelperTemplate) < 0){
+                                            this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllHelperTemplate));
+                                        }
 
                                         // Get Full All Business
-                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessGetFullAllTemplate));
-                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessGetFullAllInterfaceTemplate));
+                                        if(businessFileData.indexOf(businessGetFullAllTemplate) < 0){
+                                            this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessGetFullAllTemplate));
+                                        }
+                                        if(businessFileInterfaceData.indexOf(businessGetFullAllInterfaceTemplate) < 0){
+                                            this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessGetFullAllInterfaceTemplate));
+                                        }
 
                                         // Get Full By ID Business 
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
-                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessGetFullByIdTemplate));
-                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessGetFullByIdInterfaceTemplate));
+
+                                        if(businessFileData.indexOf(businessGetFullByIdTemplate) < 0){
+                                            this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessGetFullByIdTemplate));
+                                        }
+                                        if(businessFileInterfaceData.indexOf(businessGetFullByIdInterfaceTemplate) < 0){
+                                            this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessGetFullByIdInterfaceTemplate));
+                                        }
 
                                         // Insert Full Business
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
-                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullTemplate));
-                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullInterfaceTemplate));
+
+                                        if(businessFileData.indexOf(businessInsertFullTemplate) < 0){
+                                            this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullTemplate));
+                                        }
+                                        if(businessFileInterfaceData.indexOf(businessInsertFullInterfaceTemplate) < 0){
+                                            this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullInterfaceTemplate));
+                                        }
 
                                         // Insert Full All Business
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
-                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullAllTemplate));
-                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullAllInterfaceTemplate));
+
+                                        if(businessFileData.indexOf(businessInsertFullAllTemplate) < 0){
+                                            this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullAllTemplate));
+                                        }
+                                        if(businessFileInterfaceData.indexOf(businessInsertFullAllInterfaceTemplate) < 0){
+                                            this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullAllInterfaceTemplate));
+                                        }
 
                                         // Edit Full Business
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
-                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessEditFullTemplate));
-                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullInterfaceTemplate));
 
+                                        if(businessFileData.indexOf(businessEditFullTemplate) < 0){
+                                            this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessEditFullTemplate));
+                                        }
+                                        if(businessFileInterfaceData.indexOf(businessEditFullInterfaceTemplate) < 0){
+                                            this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullInterfaceTemplate));
+                                        }
+                                        
                                         // Edit Full All Business
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
-                                        this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessEditFullAllTemplate));
-                                        this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullAllInterfaceTemplate));
+
+                                        if(businessFileData.indexOf(businessEditFullAllTemplate) < 0){
+                                            this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessEditFullAllTemplate));
+                                        }
+                                        if(businessFileInterfaceData.indexOf(businessEditFullAllInterfaceTemplate) < 0){
+                                            this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullAllInterfaceTemplate));
+                                        }
 
                                         callback(this.response.setData(true));
                                     });
@@ -313,7 +358,7 @@ export class BusinessModule extends BaseModule {
         return `${T + T} BaseResponse insertFull(${viewModelName}VM model);`;
     }
 
-    private _generateInsertFullTemplate(viewModelName: string, modelTableTree: TableTree, availablesModelFiles: Array<ModelFile>): string {
+    private _generateInsertFullTemplate(viewModelName: string, modelTableTree: TableTree): string {
         const N = "\n"; //Break line
         const T = "\t"; //Tab line
         var methodContent = `${T + T}public BaseResponse insertFull(${viewModelName}VM model) ${N + T + T}{${N}`;
@@ -326,26 +371,42 @@ export class BusinessModule extends BaseModule {
             methodContent += `${T + T + T}${tableNameUpper}Repository _${tableNameLower}Repository = new ${tableNameUpper}Repository(_configuration);${N}`;
         });
 
-        // Models list
-        modelTableTree.middleTables.forEach((middleTable) => {
-            var middleTableModelFile = availablesModelFiles.find((modelFile) => modelFile.tableName == middleTable.referencedTable.name);
-            var listModelFile = availablesModelFiles.find((modelFile) => modelFile.tableName == middleTable.referencedTable.references[0].referencedTable.name);
+        // Middle tables object
+        modelTableTree.middleTables.forEach((table) => {
+            var middleTableNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var middleTableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var listModelNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
+            var listModelNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
 
-            methodContent += `${T + T + T}${middleTableModelFile.modelName}Repository _${ValidateService.lowercaseFirstLetter(middleTableModelFile.fileName)}Repository = new ${middleTableModelFile.modelName}Repository(_configuration);${N}`;
-            methodContent += `${T + T + T}${listModelFile.modelName}Repository _${ValidateService.lowercaseFirstLetter(listModelFile.fileName)}Repository = new ${listModelFile.modelName}Repository(_configuration);${N}`;
-            methodContent += `${T + T + T}IEnumerable<${listModelFile.modelName}> list${listModelFile.fileName} = _${ValidateService.lowercaseFirstLetter(listModelFile.fileName)}Repository.getAll();${N}`;
+            var initialization = `${T + T + T}${middleTableNameUpper}Repository _${middleTableNameLower}Repository = new ${middleTableNameUpper}Repository(_configuration);${N}`;
+
+            if (methodContent.indexOf(initialization) < 0){
+                methodContent += initialization;
+            }
+
+            initialization = `${T + T + T}${listModelNameUpper}Repository _${listModelNameLower}Repository = new ${listModelNameUpper}Repository(_configuration);${N}`;
+
+            if (methodContent.indexOf(initialization) < 0){
+                methodContent += initialization;
+            }
+
+            initialization = `${T + T + T}IEnumerable<${listModelNameUpper}> list${listModelNameUpper} = _${listModelNameLower}Repository.getAll();${N}`;
+
+            if (methodContent.indexOf(initialization) < 0){
+                methodContent += initialization;
+            }
         });
 
         methodContent += `${N + T + T + T}try ${N + T + T + T}{${N}`;
 
         // Models object
         modelTableTree.references.forEach((table) => {
-            var tableNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.name);
+            var tableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
 
             var foreignKeyField = modelTableTree.columns.find(row => row.Field == table.foreignKeyReferenceTableColumnName);
             var castType = foreignKeyField.Type.indexOf('long') > -1 ? '' : '(int)';
 
-            methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${tableNameLower}.${table.foreignKeyReferenceTableColumnName} > 0 ? model.${tableNameLower}.${table.foreignKeyReferenceTableColumnName} : ${castType}_${tableNameLower}Repository.insert(model.${tableNameLower});${N}`;
+            methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.${table.foreignKeyReferenceTableColumnName} > 0 ? model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.${table.foreignKeyReferenceTableColumnName} : ${castType}_${tableNameLower}Repository.insert(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
         });
 
         if (modelTableTree.references.length > 0) {
@@ -360,35 +421,38 @@ export class BusinessModule extends BaseModule {
         }
 
         // Models List
-        modelTableTree.middleTables.forEach((middleTable) => {
-            var middleTableModelFile = availablesModelFiles.find((modelFile) => modelFile.tableName == middleTable.referencedTable.name);
-            var listModelFile = availablesModelFiles.find((modelFile) => modelFile.tableName == middleTable.referencedTable.references[0].referencedTable.name);
+        modelTableTree.middleTables.forEach((table) => {
+            var middleTableNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var middleTableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var listModelNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
+            var listModelNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
 
-            var middleTableForeignKeyField = middleTable.referencedTable.columns.find(row => row.Field == middleTable.foreignKeyReferenceTableColumnName);
+
+            var middleTableForeignKeyField = table.referencedTable.columns.find(row => row.Field == table.foreignKeyReferenceTableColumnName);
             var middleTableCastType = middleTableForeignKeyField.Type.indexOf('long') > -1 ? '' : '(int)';
 
-            var middleTableChildForeignKeyField = middleTable.referencedTable.columns.find(row => row.Field == middleTable.referencedTable.references[0].foreignKeyColumnName);
+            var middleTableChildForeignKeyField = table.referencedTable.columns.find(row => row.Field == table.referencedTable.references[0].foreignKeyColumnName);
             var middleTableChildCastType = middleTableChildForeignKeyField.Type.indexOf('long') > -1 ? '' : '(int)';
 
-            methodContent += `${T + T + T + T}List<${middleTableModelFile.modelName}> list${middleTableModelFile.modelName} = new List<${middleTableModelFile.modelName}>();${N}`;
+            methodContent += `${T + T + T + T}List<${middleTableNameUpper}> list${middleTableNameUpper} = new List<${middleTableNameUpper}>();${N}`;
 
-            methodContent += `${T + T + T + T}model.${pluralize.plural(ValidateService.lowercaseFirstLetter(listModelFile.modelName))}.ForEach((${ValidateService.lowercaseFirstLetter(listModelFile.modelName)}) => ${N +
+            methodContent += `${T + T + T + T}model.${pluralize.plural(listModelNameLower)}.ForEach((${listModelNameLower}) => ${N +
                 T + T + T + T}{${N}`;
 
-            methodContent += `${T + T + T + T + T}${middleTableModelFile.modelName} ${ValidateService.lowercaseFirstLetter(middleTableModelFile.modelName)} = new ${middleTableModelFile.modelName}();${N}`;
-            methodContent += `${T + T + T + T + T}${ValidateService.lowercaseFirstLetter(middleTableModelFile.modelName)}.${middleTable.foreignKeyReferenceTableColumnName} = ${middleTableCastType}id;${N}`;
+            methodContent += `${T + T + T + T + T}${middleTableNameUpper} ${middleTableNameLower} = new ${middleTableNameUpper}();${N}`;
+            methodContent += `${T + T + T + T + T}${middleTableNameLower}.${table.foreignKeyReferenceTableColumnName} = ${middleTableCastType}id;${N}`;
 
-            methodContent += `${T + T + T + T + T}if(${ValidateService.lowercaseFirstLetter(listModelFile.modelName)}.id > 0) ${ValidateService.lowercaseFirstLetter(middleTableModelFile.modelName)}.${middleTable.referencedTable.references[0].foreignKeyColumnName} = ${ValidateService.lowercaseFirstLetter(listModelFile.modelName)}.id;${N}`;
+            methodContent += `${T + T + T + T + T}if(${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} > 0) ${middleTableNameLower}.${table.referencedTable.references[0].foreignKeyColumnName} = ${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName};${N}`;
             methodContent += `${T + T + T + T + T}else${N + T + T + T + T + T}{${N}`;
 
-            methodContent += `${T + T + T + T + T + T}${listModelFile.modelName} aux${listModelFile.modelName} = list${listModelFile.modelName}.ToList().Find(x => x.name == ${ValidateService.lowercaseFirstLetter(listModelFile.modelName)}.name);${N}`;
-            methodContent += `${T + T + T + T + T + T}${ValidateService.lowercaseFirstLetter(middleTableModelFile.modelName)}.${middleTable.referencedTable.references[0].foreignKeyColumnName} = aux${listModelFile.modelName} != null ? aux${listModelFile.modelName}.id : ${middleTableChildCastType}_${ValidateService.lowercaseFirstLetter(listModelFile.fileName)}Repository.insert(${ValidateService.lowercaseFirstLetter(listModelFile.modelName)});${N}`;
+            methodContent += `${T + T + T + T + T + T}${listModelNameUpper} aux${listModelNameUpper} = list${listModelNameUpper}.ToList().Find(x => x.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} == ${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName});${N}`;
+            methodContent += `${T + T + T + T + T + T}${middleTableNameLower}.${table.referencedTable.references[0].foreignKeyColumnName} = aux${listModelNameUpper} != null ? aux${listModelNameUpper}.id : ${middleTableChildCastType}_${listModelNameLower}Repository.insert(${listModelNameLower});${N}`;
             methodContent += `${T + T + T + T + T}}${N + N}`;
 
-            methodContent += `${T + T + T + T + T}list${middleTableModelFile.modelName}.Add(${ValidateService.lowercaseFirstLetter(middleTableModelFile.modelName)});${N}`;
+            methodContent += `${T + T + T + T + T}list${middleTableNameUpper}.Add(${middleTableNameLower});${N}`;
             methodContent += `${T + T + T + T}});${N + N}`;
 
-            methodContent += `${T + T + T + T}_${ValidateService.lowercaseFirstLetter(middleTableModelFile.fileName)}Repository.insert(list${middleTableModelFile.modelName});${N + N}`;
+            methodContent += `${T + T + T + T}_${middleTableNameLower}Repository.insert(list${middleTableNameUpper});${N + N}`;
         });
 
         methodContent += `${T + T + T + T}return _baseResponse.setData(true);${N}`;
@@ -463,14 +527,14 @@ export class BusinessModule extends BaseModule {
         modelTableTree.references.forEach((table) => {
             var tableNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.name);
 
-            methodContent += `${T + T + T + T}if (model.${tableNameLower}.id > 0){${N}`;
-            methodContent += `${T + T + T + T + T} _${tableNameLower}Repository.update(model.${tableNameLower});${N}`;
+            methodContent += `${T + T + T + T}if (model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.id > 0){${N}`;
+            methodContent += `${T + T + T + T + T} _${tableNameLower}Repository.update(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
             methodContent += `${T + T + T + T}}${N}`;
             methodContent += `${T + T + T + T}else {${N}`;
-            methodContent += `${T + T + T + T + T} _${tableNameLower}Repository.insert(model.${tableNameLower});${N}`;
+            methodContent += `${T + T + T + T + T} _${tableNameLower}Repository.insert(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
             methodContent += `${T + T + T + T}}${N + N}`;
 
-            methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${tableNameLower}.${table.foreignKeyReferenceTableColumnName};${N}`;
+            methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.${table.foreignKeyReferenceTableColumnName};${N}`;
         });
 
         methodContent += `${T + T + T + T}_repository.update(model.ConvertTo<${ValidateService.capitalizeFirstLetter(modelTableTree.name)}>());${N + N}`;

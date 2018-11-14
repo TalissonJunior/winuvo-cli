@@ -42,18 +42,18 @@ export class RepositoryModule extends BaseModule {
             callback(this.response.setError('Couldnt find model', `Coudn´t find a model with the name ${modelName} at ${path.join(modelPath, modelExtension)}`));
         }
         else if (fs.existsSync(path.join(repositoryInterfacesPath, repositoryInterfaceExtension))) {
-            if(!throwErrorIfExists){
+            if (!throwErrorIfExists) {
                 callback(this.response.setData('skip'));
             }
-            else{
+            else {
                 callback(this.response.setError('Already exists repository interface', `Already exists a repository interface ${path.join(repositoryInterfacesPath, repositoryInterfaceExtension)}`));
             }
         }
         else if (fs.existsSync(path.join(repositoryPath, repositoryExtension))) {
-            if(!throwErrorIfExists){
+            if (!throwErrorIfExists) {
                 callback(this.response.setData('skip'));
             }
-            else{
+            else {
                 callback(this.response.setError('Already exists repository', `Already exists a repository ${path.join(repositoryPath, repositoryExtension)}`));
             }
         }
@@ -127,7 +127,7 @@ export class RepositoryModule extends BaseModule {
                 T + T + T + T}return conn.Execute(sql, new { ${table.foreignKeyColumnName} = ${table.foreignKeyColumnName} });${N +
                 T + T + T}}${N +
                 T + T}}${N}`;
-            
+
             var deleteAllByTableInterfaceMethodContent = `${T + T} ${tableIdType} deleteAllBy${ValidateService.capitalizeFirstLetter(modelTableTree.name)}Id(${tableIdType} ${table.foreignKeyColumnName});`;
 
             var deleteAllByMethodName = `deleteAllBy${ValidateService.capitalizeFirstLetter(modelTableTree.name)}Id`;
@@ -136,13 +136,13 @@ export class RepositoryModule extends BaseModule {
             var repositoryFileInterfacePath = path.join(process.cwd(), this.config['repositoryPath']['interfaces'], "I" + ValidateService.transformStringToCamelCase(table.referencedTable.name) + this.config['repositoryPath']['suffixExtension']);
             var repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
             var repositoryFileInterfaceData = fs.readFileSync(repositoryFileInterfacePath, 'utf8');
-            
+
             // Get all method
-            if(repositoryFileData.indexOf(getAllByMethodName) < 0) {
+            if (repositoryFileData.indexOf(getAllByMethodName) < 0) {
                 this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, getAllByTableMethodContent));
             }
 
-            if(repositoryFileInterfaceData.indexOf(getAllByMethodName) < 0) {
+            if (repositoryFileInterfaceData.indexOf(getAllByMethodName) < 0) {
                 this.schematics.createFile(repositoryFileInterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, getAllByTableInterfaceMethodContent));
             }
 
@@ -150,11 +150,11 @@ export class RepositoryModule extends BaseModule {
             repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
             repositoryFileInterfaceData = fs.readFileSync(repositoryFileInterfacePath, 'utf8');
 
-            if(repositoryFileData.indexOf(deleteAllByMethodName) < 0) {
+            if (repositoryFileData.indexOf(deleteAllByMethodName) < 0) {
                 this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, deleteAllByTableMethodContent));
             }
 
-            if(repositoryFileInterfaceData.indexOf(deleteAllByMethodName) < 0) {
+            if (repositoryFileInterfaceData.indexOf(deleteAllByMethodName) < 0) {
                 this.schematics.createFile(repositoryFileInterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, deleteAllByTableInterfaceMethodContent));
             }
 
@@ -167,36 +167,44 @@ export class RepositoryModule extends BaseModule {
         const N = "\n"; //Break line
         const T = "\t"; //Tab line
 
-        var tableNamesWithSuffix = modelTableTree.references.map(table => ' ' + ValidateService.lowercaseFirstLetter(table.referencedTable.name) + '_tb.*').join(',');
+        var tableNamesWithSuffix = modelTableTree.references.map(table => ' ' + ValidateService.getTheForeignKeyName(table.foreignKeyColumnName) + '_tb.*');
         var tableNamesWithSuffixSeparator = tableNamesWithSuffix.length > 0 ? ', ' : '';
 
-        var tableListNamesWithSuffix = modelTableTree.middleTables.map(table => ' ' + ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name) + '_tb.*').join(',');
+        var tableListNamesWithSuffix = modelTableTree.middleTables.map(table => {
+            var model = ' ' + ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name) + '_tb.*';
+
+            // Avoid the model that will be inserted in a list to have the same name as object model name, this can cause some compilation issues
+            if (tableNamesWithSuffix.find(tableName => tableName == model)) {
+                return model.replace('_tb.*', '_tb_list.*');
+            }
+
+            return model;
+        });
 
         // Create the sql
-        var sql = `@"SELECT ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.*,${tableNamesWithSuffix}${tableNamesWithSuffixSeparator}${tableListNamesWithSuffix}${N}`;
-        sql += `${T + T + T + T + T + T}FROM ${modelTableTree.name} as ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb${N}`;
+        var sql = `@"SELECT ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.*,${tableNamesWithSuffix.join(',')}${tableNamesWithSuffixSeparator}${tableListNamesWithSuffix.join(',')}${N}`;
+        sql += `${T + T + T + T + T + T}FROM ${modelTableTree.name} as ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb`;
+
+        modelTableTree.references.forEach((table) => {
+            sql += `${N + T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.name} as ${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}_tb${N}`;
+            sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.${table.foreignKeyColumnName} = ${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}_tb.${table.foreignKeyReferenceTableColumnName}`;
+        });
 
         modelTableTree.middleTables.forEach((table) => {
             // middle table
-            sql += `${T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb${N}`;
+            sql += `${N + T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb${N}`;
             sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb.${table.foreignKeyReferenceTableColumnName} = ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.${table.foreignKeyColumnName}${N}`;
 
-            // middle table lists
-            sql += `${T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.references[0].referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)}_tb${N}`;
-            sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb.${table.referencedTable.references[0].foreignKeyColumnName} = ${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)}_tb.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName}`;
-        });
-
-        modelTableTree.references.forEach((table, index) => {
-            // middle table
-            if(modelTableTree.middleTables.length > 0 && index == 0)
-                sql += N;
-
-            if(index > 0){
-                sql += N;
+            // Avoid the model that will be inserted in a list to have the same name as object model name, this can cause some compilation issues
+            var duplicatedModel = modelTableTree.references.find((referencedTable) => ValidateService.getTheForeignKeyName(referencedTable.foreignKeyColumnName) == table.referencedTable.references[0].referencedTable.name);
+            var suffix = '';
+            if (duplicatedModel) {
+                suffix = '_list';
             }
 
-            sql += `${N + T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb${N}`;
-            sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.${table.foreignKeyColumnName} = ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb.${table.foreignKeyReferenceTableColumnName}`;
+            // middle table lists
+            sql += `${T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.references[0].referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)}_tb${suffix}${N}`;
+            sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb.${table.referencedTable.references[0].foreignKeyColumnName} = ${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)}_tb${suffix}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName}`;
         });
 
         sql += '";';
@@ -215,36 +223,44 @@ export class RepositoryModule extends BaseModule {
         const N = "\n"; //Break line
         const T = "\t"; //Tab line
 
-        var tableNamesWithSuffix = modelTableTree.references.map(table => ' ' + ValidateService.lowercaseFirstLetter(table.referencedTable.name) + '_tb.*').join(',');
+        var tableNamesWithSuffix = modelTableTree.references.map(table => ' ' + ValidateService.getTheForeignKeyName(table.foreignKeyColumnName) + '_tb.*');
         var tableNamesWithSuffixSeparator = tableNamesWithSuffix.length > 0 ? ', ' : '';
 
-        var tableListNamesWithSuffix = modelTableTree.middleTables.map(table => ' ' + ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name) + '_tb.*').join(',');
+        var tableListNamesWithSuffix = modelTableTree.middleTables.map(table => {
+            var model = ' ' + ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name) + '_tb.*';
+
+            // Avoid the model that will be inserted in a list to have the same name as object model name, this can cause some compilation issues
+            if (tableNamesWithSuffix.find(tableName => tableName == model)) {
+                return model.replace('_tb.*', '_tb_list.*');
+            }
+
+            return model;
+        });
 
         // Create the sql
-        var sql = `@"SELECT ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.*,${tableNamesWithSuffix}${tableNamesWithSuffixSeparator}${tableListNamesWithSuffix}${N}`;
-        sql += `${T + T + T + T + T + T}FROM ${modelTableTree.name} as ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb${N}`;
+        var sql = `@"SELECT ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.*,${tableNamesWithSuffix.join(',')}${tableNamesWithSuffixSeparator}${tableListNamesWithSuffix.join(',')}${N}`;
+        sql += `${T + T + T + T + T + T}FROM ${modelTableTree.name} as ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb`;
+
+        modelTableTree.references.forEach((table) => {
+            sql += `${N + T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.name} as ${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}_tb${N}`;
+            sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.${table.foreignKeyColumnName} = ${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}_tb.${table.foreignKeyReferenceTableColumnName}`;
+        });
 
         modelTableTree.middleTables.forEach((table) => {
             // middle table
-            sql += `${T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb${N}`;
+            sql += `${N + T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb${N}`;
             sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb.${table.foreignKeyReferenceTableColumnName} = ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.${table.foreignKeyColumnName}${N}`;
 
-            // middle table lists
-            sql += `${T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.references[0].referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)}_tb${N}`;
-            sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb.${table.referencedTable.references[0].foreignKeyColumnName} = ${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)}_tb.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName}`;
-        });
-
-        modelTableTree.references.forEach((table, index) => {
-            // middle table
-            if(modelTableTree.middleTables.length > 0 && index == 0)
-                sql += N;
-
-            if(index > 0){
-                sql += N;
+            // Avoid the model that will be inserted in a list to have the same name as object model name, this can cause some compilation issues
+            var duplicatedModel = modelTableTree.references.find((referencedTable) => ValidateService.getTheForeignKeyName(referencedTable.foreignKeyColumnName) == table.referencedTable.references[0].referencedTable.name);
+            var suffix = '';
+            if (duplicatedModel) {
+                suffix = '_list';
             }
 
-            sql += `${T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb${N}`;
-            sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}_tb.${table.foreignKeyColumnName} = ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb.${table.foreignKeyReferenceTableColumnName}`;
+            // middle table lists
+            sql += `${T + T + T + T + T + T}LEFT JOIN ${table.referencedTable.references[0].referencedTable.name} as ${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)}_tb${suffix}${N}`;
+            sql += `${T + T + T + T + T + T}ON ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)}_tb.${table.referencedTable.references[0].foreignKeyColumnName} = ${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)}_tb${suffix}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName}`;
         });
 
         var tableIdType = modelTableTree.columns.find((row) => row.Field.toLowerCase() == 'id').Type;
@@ -265,21 +281,32 @@ export class RepositoryModule extends BaseModule {
         const T = "\t"; //Tab line
         var methodContent = `${N + T + T}private async Task<IEnumerable<${viewModelName}VM>> _${ValidateService.lowercaseFirstLetter(viewModelName)}Query(string sql, object param)${N + T + T}{${N}`;
 
-        var modelsNamesFirstLetterUpper = modelTableTree.references.map(table => ValidateService.capitalizeFirstLetter(table.referencedTable.name)).join(',');
+        var modelsNamesFirstLetterUpper = modelTableTree.references.map(table => ValidateService.capitalizeFirstLetter(table.referencedTable.name));
         var modelNamesFirstLetterUpperSeparator = modelsNamesFirstLetterUpper.length > 0 ? ', ' : '';
-       
-        var modelListFirstLetterUpper = modelTableTree.middleTables.map((middletable) => ValidateService.capitalizeFirstLetter(middletable.referencedTable.references[0].referencedTable.name)).join(',');
+
+        var modelListFirstLetterUpper = modelTableTree.middleTables.map((middletable) => ValidateService.capitalizeFirstLetter(middletable.referencedTable.references[0].referencedTable.name));
         var modelListFirstLetterUpperSeparator = modelListFirstLetterUpper.length > 0 ? ', ' : '';
 
-        var modelListFirstLetterLower = modelTableTree.middleTables.map((middletable) => ValidateService.lowercaseFirstLetter(middletable.referencedTable.references[0].referencedTable.name)).join(',');
+        var modelsNamesFirstLetterLower = modelTableTree.references.map(table => ValidateService.getTheForeignKeyName(table.foreignKeyColumnName));
+        var modelNamesFirstLetterLowerSeparator = modelsNamesFirstLetterLower.length > 0 ? ', ' : '';
 
-        var modelsNamesFirstLetterLower = modelTableTree.references.map(table => ValidateService.lowercaseFirstLetter(table.referencedTable.name)).join(',');
-        var modelNamesFirstLetterLowerSeparator = modelListFirstLetterLower.length > 0 ? ', ' : '';
+        var modelListFirstLetterLower = modelTableTree.middleTables.map((middletable) => {
+            var model = ValidateService.lowercaseFirstLetter(middletable.referencedTable.references[0].referencedTable.name);
+
+            // Avoid the model that will be inserted in a list to have the same name as object model name, this can cause some compilation issues
+            if (modelsNamesFirstLetterLower.find(modelName => modelName == model)) {
+                return model + 'OfList';
+            }
+
+            return model;
+        });
+
+        var modelListFirstLetterLowerSeparator = modelListFirstLetterLower.length > 0 ? ', ' : '';
 
         methodContent += `${T + T + T}using (IDbConnection conn = Connection)${N +
             T + T + T}{${N +
             T + T + T + T} var helperDictionary = new Dictionary<long, ${viewModelName}VM>();${N + N +
-            T + T + T + T}return await conn.QueryAsync<${ValidateService.capitalizeFirstLetter(modelTableTree.name)}, ${modelsNamesFirstLetterUpper}${modelNamesFirstLetterUpperSeparator}${modelListFirstLetterUpper}${modelListFirstLetterUpperSeparator}${viewModelName}VM>(sql, (${ValidateService.lowercaseFirstLetter(modelTableTree.name)}, ${modelsNamesFirstLetterLower}${modelNamesFirstLetterLowerSeparator}${modelListFirstLetterLower}) =>${N +
+            T + T + T + T}return await conn.QueryAsync<${ValidateService.capitalizeFirstLetter(modelTableTree.name)}, ${modelsNamesFirstLetterUpper.join("")}${modelNamesFirstLetterUpperSeparator}${modelListFirstLetterUpper.join("")}${modelListFirstLetterUpperSeparator}${viewModelName}VM>(sql, (${ValidateService.lowercaseFirstLetter(modelTableTree.name)}${modelNamesFirstLetterLowerSeparator}${modelsNamesFirstLetterLower.join("")}${modelListFirstLetterLowerSeparator}${modelListFirstLetterLower.join("")}) =>${N +
             T + T + T + T}{${N +
             T + T + T + T + T}${viewModelName}VM returnModel;${N + N +
             T + T + T + T + T}if (!helperDictionary.TryGetValue(${ValidateService.lowercaseFirstLetter(modelTableTree.name)}.id, out returnModel))${N +
@@ -287,7 +314,7 @@ export class RepositoryModule extends BaseModule {
             T + T + T + T + T + T}returnModel = ${ValidateService.lowercaseFirstLetter(modelTableTree.name)}.ConvertTo<${viewModelName}VM>();${N}`;
 
         modelTableTree.references.forEach((table) => {
-            methodContent += `${T + T + T + T + T + T}returnModel.${ValidateService.lowercaseFirstLetter(table.referencedTable.name)} = ${ValidateService.lowercaseFirstLetter(table.referencedTable.name)};${N}`;
+            methodContent += `${T + T + T + T + T + T}returnModel.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)} = ${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)};${N}`;
         });
 
         modelTableTree.middleTables.forEach((table) => {
@@ -298,8 +325,15 @@ export class RepositoryModule extends BaseModule {
         methodContent += `${T + T + T + T + T}}${N + N}`;
 
         modelTableTree.middleTables.forEach((table) => {
+            // Avoid the model that will be inserted in a list to have the same name as object model name, this can cause some compilation issues
+            var duplicatedModel = modelTableTree.references.find((referencedTable) => ValidateService.getTheForeignKeyName(referencedTable.foreignKeyColumnName) == table.referencedTable.references[0].referencedTable.name);
+            var listModelName = table.referencedTable.references[0].referencedTable.name;
+            if (duplicatedModel) {
+                listModelName = listModelName + 'OfList';
+            }
+
             methodContent += `${T + T + T + T + T}if(${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)} != null)${N}`;
-            methodContent += `${T + T + T + T + T + T}returnModel.${pluralize.plural(ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name))}.Add(${ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name)});${N + N}`;
+            methodContent += `${T + T + T + T + T + T}returnModel.${pluralize.plural(ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.name))}.Add(${ValidateService.lowercaseFirstLetter(listModelName)});${N + N}`;
         });
 
         methodContent += `${T + T + T + T + T}return returnModel;${N}`;

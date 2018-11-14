@@ -48,4 +48,47 @@ export class ValidateService {
         return arrayValues.join('');
     }
 
+    /**
+     * @description The value must be a string separated by '_', it will not return names that are
+     * only numbers, only vogals or consoants, and won´t return string that starts with number
+     * @example 'fk_ttt_aaa_1teste_user_teste2_id' -> returns 'userTeste2';
+     * @param value 
+     */
+    static getTheForeignKeyName(value: string): string {
+        var arrayValues = value.split('_');
+        var regexVogal = /[aeiou]/i;
+        var regexConsoant = /[bcdfghjklmnpqrstvxzyw]/i;
+
+        arrayValues = arrayValues.filter((value) => {
+
+            // Teste if is bigger the 2 if is not only numbers;
+            if (value.length > 2 && !(/^\d+$/.test(value))) {
+
+                var hasVogal = false;
+                var hasConsoant = false;
+
+                for (var i = 0; i < value.length; i++) {
+                    if (regexVogal.test(value.charAt(i))) {
+                        hasVogal = true;
+                    }
+                    if (regexConsoant.test(value)) {
+                        hasConsoant = true;
+                    }
+
+                    if (hasVogal && hasConsoant) {
+                       break;
+                    }
+                }
+
+               if(hasVogal && hasConsoant && !(/^\d+$/.test(value.charAt(0)))){
+                   return true;
+               }
+            }
+        });
+
+        arrayValues = arrayValues.map((value) => this.capitalizeFirstLetter(value));
+        
+        return this.lowercaseFirstLetter(arrayValues.join(""));
+    }
+
 }

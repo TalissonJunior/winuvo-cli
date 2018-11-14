@@ -27,6 +27,10 @@ export class ModelModule extends BaseModule {
 
             if (databaseResponse.data) {
 
+                  //REMOVE
+                  fs.writeFileSync(path.join(process.cwd() + 'teste.json'), JSON.stringify(this.database.tablesTree));
+                  //REMOVE
+
                 this.createModel(tableName, options.name, (response) => {
                     if (response.data) {
 
@@ -64,7 +68,7 @@ export class ModelModule extends BaseModule {
                 if (this.schematics.createFile(modelPath, modelTemplate, modelNamWithExtension)) {
                     callback(this.response.setData({
                         fileName: path.parse(modelNamWithExtension).name,
-                        filenNameWithExtension: modelNamWithExtension,
+                        fileNameWithExtension: modelNamWithExtension,
                         fileExtension: path.parse(modelNamWithExtension).ext,
                         modelName: modelName,
                         tableName: tableName,
@@ -90,9 +94,9 @@ export class ModelModule extends BaseModule {
         }
     }
 
-    createViewModel(viewModelName: string, modelToExtendName: string, models: Array<string>, modelsList: Array<string>, callback: BaseCallback) {
+    createViewModel(viewModelName: string, modelTableTree: TableTree, callback: BaseCallback) {
 
-        var viewModelTemplate = this._createViewModelFileTemplate(viewModelName, modelToExtendName, models, modelsList);
+        var viewModelTemplate = this._createViewModelFileTemplate(viewModelName, modelTableTree);
         var viewModelPath = path.join(process.cwd(), this.config['viewModelPath']['main']);
         var viewModelNameWithExtension = ValidateService.capitalizeFirstLetter(viewModelName) + this.config['viewModelPath']['suffixExtension'];
 
@@ -101,7 +105,7 @@ export class ModelModule extends BaseModule {
             if (this.schematics.createFile(viewModelPath, viewModelTemplate, viewModelNameWithExtension)) {
                 callback(this.response.setData({
                     fileName: path.parse(viewModelNameWithExtension).name,
-                    filenNameWithExtension: viewModelNameWithExtension,
+                    fileNameWithExtension: viewModelNameWithExtension,
                     fileExtension: path.parse(viewModelNameWithExtension).ext,
                     modelName: viewModelName,
                     tableName: '',
@@ -136,7 +140,7 @@ export class ModelModule extends BaseModule {
 
                     tablesReturn.push({
                         fileName: path.parse(fileNameWithExtension).name,
-                        filenNameWithExtension: fileNameWithExtension,
+                        fileNameWithExtension: fileNameWithExtension,
                         fileExtension: path.parse(fileNameWithExtension).ext,
                         modelName: modelName,
                         tableName: tableName
@@ -158,8 +162,21 @@ export class ModelModule extends BaseModule {
                             var promise = new Promise((resolve, reject) => {
                                 this.createModel(tableName, modelName, (createModelResponse) => {
 
-                                    if (createModelResponse.data) {
+                                    if(createModelResponse.data){
                                         resolve(createModelResponse.data);
+                                    }
+                                    else{
+                                        var modelPath = createModelResponse.error.message.substr('Already exists a model'.length).trim();
+
+                                        resolve({
+                                            fileName: path.parse(modelPath).name,
+                                            fileNameWithExtension: path.parse(modelPath).name + path.parse(modelPath).ext,
+                                            fileExtension: path.parse(modelPath).ext,
+                                            modelName: modelName,
+                                            tableName: tableName,
+                                            created: true,
+                                            message: `<update/> ${path.join(modelPath, path.parse(modelPath).name + path.parse(modelPath).ext)}`
+                                        } as ModelFileCreate);
                                     }
                                 });
                             });
@@ -204,15 +221,15 @@ export class ModelModule extends BaseModule {
         return this.schematics.getStringAfter(file, 'public class ');
     }
 
-    private _createViewModelFileTemplate(viewModelName: string, modelToExtendName: string, models: Array<string>, modelsList: Array<string>): string {
+    private _createViewModelFileTemplate(viewModelName: string, modelTableTree: TableTree): string {
         var content = '';
         const N = "\n"; //Break line
         const T = "\t"; //Tab line
 
-        models.forEach((name, index) => {
-            content += `public ${ValidateService.capitalizeFirstLetter(name)} ${ValidateService.lowercaseFirstLetter(name)} { get; set; }`;
+        modelTableTree.references.forEach((table, index) => {
+            content += `public ${ValidateService.capitalizeFirstLetter(table.referencedTable.name)} ${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)} { get; set; }`;
 
-            if (index < models.length - 1) {
+            if (index < modelTableTree.references.length - 1) {
                 content += N + N;
             }
             else {
@@ -220,15 +237,16 @@ export class ModelModule extends BaseModule {
             }
         });
 
-        modelsList.forEach((name, index) => {
-            content += `${N + T + T}public List<${ValidateService.capitalizeFirstLetter(name)}> ${pluralize.plural(ValidateService.lowercaseFirstLetter(name))} { get; set; }`;
+        modelTableTree.middleTables.forEach((table, index) => {
+            var modelListName = ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name);
+            content += `${N + T + T}public List<${ValidateService.capitalizeFirstLetter(modelListName)}> ${pluralize.plural(ValidateService.lowercaseFirstLetter(modelListName))} { get; set; }`;
 
-            if (index < models.length - 1) {
+            if (index < modelTableTree.middleTables.length - 1) {
                 content += N;
             }
         });
 
-        return viewModelTemplate(this.config['Project']['name'], viewModelName, modelToExtendName, content);
+        return viewModelTemplate(this.config['Project']['name'], viewModelName, ValidateService.capitalizeFirstLetter(modelTableTree.name), content);
     }
 
 

@@ -1,6 +1,6 @@
 export interface ModelFile {
     fileName: string;
-    filenNameWithExtension: string;
+    fileNameWithExtension: string;
     fileExtension:string;
     modelName: string;
     tableName: string;
