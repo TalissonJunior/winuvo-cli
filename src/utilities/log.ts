@@ -42,6 +42,10 @@ export class Log {
      * @example "<info> your text </info>"  => "your text" in white cyan color.
      */
     static log(message: string) {
+        if(message == 'skip'){
+            return;
+        }
+        
         if (message) {
 
             while (message.indexOf('<update/>') > -1) {

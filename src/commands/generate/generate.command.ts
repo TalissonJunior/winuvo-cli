@@ -16,16 +16,16 @@ export class GenerateCommand extends BaseCommand {
         this.controller = new ControllerModule(this.spinner);
     }
 
-    generateModel(options: ModelOptions, callback: BaseCallback): void {
-        this.model.create(options, callback);
+    generateModel(options: ModelOptions, callback: BaseCallback, throwErrorIfExists = true): void {
+        this.model.create(options, callback, throwErrorIfExists);
     }
 
-    generateRepository(name: string, modelName: string, callback: BaseCallback): void {
-        this.repository.create(name, modelName, callback);
+    generateRepository(name: string, modelName: string, callback: BaseCallback, throwErrorIfExists = true): void {
+        this.repository.create(name, modelName, callback, throwErrorIfExists);
     }
 
-    generateBusiness(name: string, modelName: string, callback: BaseCallback): void {
-        this.business.create(name, modelName, callback);
+    generateBusiness(name: string, modelName: string, callback: BaseCallback, throwErrorIfExists = true): void {
+        this.business.create(name, modelName, callback, throwErrorIfExists);
     }
 
     generateController(name: string, modelName: string, callback: BaseCallback): void {

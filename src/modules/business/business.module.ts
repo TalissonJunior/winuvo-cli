@@ -25,7 +25,7 @@ export class BusinessModule extends BaseModule {
         this.repositoryModule = new RepositoryModule(spinner);
     }
 
-    create(name: string, modelName: string, callback: BaseCallback): void {
+    create(name: string, modelName: string, callback: BaseCallback, throwErrorIfExists = true): void {
         modelName = modelName.replace(/Business/g, '');
 
         var modelPath = path.join(process.cwd(), this.config['modelPath']['main']);
@@ -50,10 +50,20 @@ export class BusinessModule extends BaseModule {
             callback(this.response.setError('Couldn´t find repository', `Coudn´t find a repository interface with the name ${repositoryNameWithExtension} at ${path.join(repositoryPath, repositoryNameWithExtension)}`));
         }
         else if (fs.existsSync(path.join(businessInterfacesPath, businessInterfaceExtension))) {
-            callback(this.response.setError('Already exists business interface', `Already exists a business interface ${path.join(businessInterfacesPath, businessInterfaceExtension)}`));
+            if (!throwErrorIfExists) {
+                callback(this.response.setData('skip'));
+            }
+            else {
+                callback(this.response.setError('Already exists business interface', `Already exists a business interface ${path.join(businessInterfacesPath, businessInterfaceExtension)}`));
+            }
         }
         else if (fs.existsSync(path.join(businessPath, businessNameWithExtension))) {
-            callback(this.response.setError('Already exists business', `Already exists a business ${path.join(businessPath, businessNameWithExtension)}`));
+            if (!throwErrorIfExists) {
+                callback(this.response.setData('skip'));
+            }
+            else {
+                callback(this.response.setError('Already exists business', `Already exists a business ${path.join(businessPath, businessNameWithExtension)}`));
+            }
         }
         else {
             if (this.schematics.createFile(businessInterfacesPath, this._createBusinessInterfaceFileTemplate(name, modelName), businessInterfaceExtension)) {
@@ -342,10 +352,10 @@ export class BusinessModule extends BaseModule {
             methodContent += N;
         }
 
-        if(modelTableTree.middleTables.length > 0){
+        if (modelTableTree.middleTables.length > 0) {
             methodContent += `${T + T + T + T}long id = _repository.insert(model.ConvertTo<${ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
         }
-        else{
+        else {
             methodContent += `${T + T + T + T}_repository.insert(model.ConvertTo<${ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
         }
 

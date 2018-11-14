@@ -20,7 +20,7 @@ export class ModelModule extends BaseModule {
         super(spinner);
     }
 
-    create(options: ModelOptions, callback: BaseCallback): void {
+    create(options: ModelOptions, callback: BaseCallback, throwErrorIfExists = true): void {
 
         this.database.connect(null, (databaseResponse) => {
             var tableName = options.name == options.table ? options.name : options.table;
@@ -29,12 +29,18 @@ export class ModelModule extends BaseModule {
 
                 this.createModel(tableName, options.name, (response) => {
                     if (response.data) {
-                        callback(this.response.setData((<ModelFileCreate>response.data).message));
+
+                        if(response.data != 'skip'){
+                            callback(this.response.setData((<ModelFileCreate>response.data).message));
+                        }
+                        else{
+                            callback(this.response.setData(response.data));
+                        }
                     }
                     else {
                         callback(response);
                     }
-                });
+                }, throwErrorIfExists);
 
             }
             else {
@@ -44,7 +50,7 @@ export class ModelModule extends BaseModule {
 
     }
 
-    createModel(tableName: string, modelName: string, callback: BaseCallback) {
+    createModel(tableName: string, modelName: string, callback: BaseCallback , throwErrorIfExists = true) {
 
         var table = this.database.tablesTree.find((table) => table.name.toLowerCase() == tableName.toLowerCase());
 
@@ -71,7 +77,12 @@ export class ModelModule extends BaseModule {
                 }
             }
             else {
-                callback(this.response.setError('Model already exists', `Already exists a model ${path.join(modelPath, modelNamWithExtension)}`));
+                if(!throwErrorIfExists){
+                    callback(this.response.setData('skip'));
+                }
+                else{
+                    callback(this.response.setError('Model already exists', `Already exists a model ${path.join(modelPath, modelNamWithExtension)}`));
+                }
             }
         }
         else {

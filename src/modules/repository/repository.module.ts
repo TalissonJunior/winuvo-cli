@@ -7,7 +7,6 @@ import { ValidateService } from '../../services';
 import { iRepositoryTemplate } from '../../schematics/templates/repository/interfaces';
 import { repositoryTemplate } from '../../schematics/templates/repository/repositories';
 import { TableTree } from '../../models/interfaces/table-tree';
-import { ModelFile } from '../../models/interfaces';
 
 export class RepositoryModule extends BaseModule {
 
@@ -15,7 +14,7 @@ export class RepositoryModule extends BaseModule {
         super(spinner);
     }
 
-    create(name: string, modelName: string, callback: BaseCallback): void {
+    create(name: string, modelName: string, callback: BaseCallback, throwErrorIfExists = true): void {
         modelName = modelName.replace(/Repository/g, '');
 
         this.createRepository(name, modelName, (response) => {
@@ -26,10 +25,10 @@ export class RepositoryModule extends BaseModule {
             else {
                 callback(response);
             }
-        });
+        }, throwErrorIfExists);
     }
 
-    createRepository(name: string, modelName: string, callback: BaseCallback) {
+    createRepository(name: string, modelName: string, callback: BaseCallback, throwErrorIfExists = true) {
 
         var modelPath = path.join(process.cwd(), this.config['modelPath']['main']);
         var repositoryInterfacesPath = path.join(process.cwd(), this.config['repositoryPath']['interfaces']);
@@ -43,10 +42,20 @@ export class RepositoryModule extends BaseModule {
             callback(this.response.setError('Couldnt find model', `Coudn´t find a model with the name ${modelName} at ${path.join(modelPath, modelExtension)}`));
         }
         else if (fs.existsSync(path.join(repositoryInterfacesPath, repositoryInterfaceExtension))) {
-            callback(this.response.setError('Already exists repository interface', `Already exists a repository interface ${path.join(repositoryInterfacesPath, repositoryInterfaceExtension)}`));
+            if(!throwErrorIfExists){
+                callback(this.response.setData('skip'));
+            }
+            else{
+                callback(this.response.setError('Already exists repository interface', `Already exists a repository interface ${path.join(repositoryInterfacesPath, repositoryInterfaceExtension)}`));
+            }
         }
         else if (fs.existsSync(path.join(repositoryPath, repositoryExtension))) {
-            callback(this.response.setError('Already exists repository', `Already exists a repository ${path.join(repositoryPath, repositoryExtension)}`));
+            if(!throwErrorIfExists){
+                callback(this.response.setData('skip'));
+            }
+            else{
+                callback(this.response.setError('Already exists repository', `Already exists a repository ${path.join(repositoryPath, repositoryExtension)}`));
+            }
         }
         else {
             if (this.schematics.createFile(repositoryInterfacesPath, this._createRepositoryInterfaceFileTemplate(name, modelName), repositoryInterfaceExtension)) {

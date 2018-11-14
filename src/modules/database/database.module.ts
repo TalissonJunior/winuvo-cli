@@ -264,7 +264,7 @@ export class DatabaseModule {
             else {
                 var winuvojson = JSON.parse(data);
 
-                var connectionStringFilePath = path.join(process.cwd(),winuvojson['connectionPath']['path']);
+                var connectionStringFilePath = path.join(process.cwd(), winuvojson['connectionPath']['path']);
 
                 fs.readFile(connectionStringFilePath, 'utf8', (err: NodeJS.ErrnoException, connectionStringFileData: string) => {
                     if (err) {
@@ -272,11 +272,11 @@ export class DatabaseModule {
                     }
                     else {
                         var connectionString = dotty.get(JSON.parse(connectionStringFileData), winuvojson['connectionPath']['property']);
-          
-                        if(!connectionString) {
+
+                        if (!connectionString) {
                             callback(this.response.setError(`Could not find the property "${winuvojson['connectionPath']['property']}"`, `Make sure you "winuvo.json" have "ConnectionPath.property" pointing to the connetionString property`));
                         }
-                        else{
+                        else {
                             callback(this.response.setData(connectionString));
                         }
                     }
@@ -303,13 +303,13 @@ export class DatabaseModule {
                             reject(err.message);
                         }
                         else {
-                          
+
                             //  Create the middle table
                             var middleTableOutput = Object.assign({});
 
                             var middleTableIndex = middleTables.findIndex((middleTable) => {
                                 var index = tableRows.findIndex((row) => row["TABLE_NAME"] == middleTable.name);
-                               
+
                                 if (index > -1) {
                                     middleTableOutput.foreignKeyColumnName = tableRows[index]['REFERENCED_COLUMN_NAME'];
                                     middleTableOutput.foreignKeyConstraintName = tableRows[index]['CONSTRAINT_NAME'];
@@ -333,10 +333,10 @@ export class DatabaseModule {
                                             reject(err.message);
                                         }
                                         else {
-                                           
-                                         
+
+
                                             var referencedMiddleTableRow = _.cloneDeep(referencedTableRows.find((row) => row['COLUMN_NAME'] != middleTableOutput.foreignKeyReferenceTableColumnName));
-                                        
+
                                             middleTableOutput.referencedTable.references = [
                                                 {
                                                     foreignKeyColumnName: referencedMiddleTableRow['COLUMN_NAME'],
@@ -347,7 +347,7 @@ export class DatabaseModule {
                                                         columns: tablesTree.find((tb) => tb.name == referencedMiddleTableRow['REFERENCED_TABLE_NAME']).columns,
                                                         references: [],
                                                         middleTables: [],
-                                                        isMiddleTable : false
+                                                        isMiddleTable: false
                                                     }
                                                 }
                                             ];
@@ -387,35 +387,47 @@ export class DatabaseModule {
             `,
             (err: mysql.MysqlError, rows: Array<any>) => {
                 if (err) {
+
                     callback(this.response.setError(`Insuficient previlegies in database "${this.connectionString.database}" for table ${table.name}`, err.message));
                     return;
                 }
 
                 if (rows.length > 0) {
+                    for (let index = 0; index < rows.length; index++) {
 
-                    rows.forEach((row, index) => {
-                        table.references.push({
-                            foreignKeyColumnName: row['COLUMN_NAME'],
-                            foreignKeyConstraintName: row['CONSTRAINT_NAME'],
-                            foreignKeyReferenceTableColumnName: row['REFERENCED_COLUMN_NAME'],
-                            referencedTable: {
-                                name: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).name,
-                                columns: this.tables.find((tb) => tb.name == row['REFERENCED_TABLE_NAME']).columns,
-                                references: [],
-                                middleTables: [],
-                                isMiddleTable : false
+                        try {
+
+                            table.references.push({
+                                foreignKeyColumnName: rows[index]['COLUMN_NAME'],
+                                foreignKeyConstraintName: rows[index]['CONSTRAINT_NAME'],
+                                foreignKeyReferenceTableColumnName: rows[index]['REFERENCED_COLUMN_NAME'],
+                                referencedTable: {
+                                    name: this.tables.find((tb) => tb.name == rows[index]['REFERENCED_TABLE_NAME']).name,
+                                    columns: this.tables.find((tb) => tb.name == rows[index]['REFERENCED_TABLE_NAME']).columns,
+                                    references: [],
+                                    middleTables: [],
+                                    isMiddleTable: false
+                                }
+                            });
+
+                        }
+                        catch(e){
+                            if(e.message == "Cannot read property 'name' of undefined"){
+                                callback(this.response.setError('Database foreign key error, please check your database foreign keys', `The table "${table.name}" with the foreign key "${rows[index]['COLUMN_NAME']}" points to a nonexistent table called "${rows[index]['REFERENCED_TABLE_NAME']}"`));
                             }
-                        });
+                            return;
+                        }
 
                         if (rows.length - 1 == index) {
                             callback(this.response.setData(table));
                         }
-                    });
+                    }
                 }
                 else {
                     callback(this.response.setData(table));
                 }
             });
+
     }
 
     private _createTableTree(conn: mysql.Connection, table: TableTree, callback: BaseCallback) {
