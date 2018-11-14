@@ -64,17 +64,17 @@ winuvo generate all users --model="user" --table="tb_user"
 To make sure that **winuvo-cli** maps all your tables with a great perfomance , we have set some rules for database.
 
  1. The first character must be a letter
-    ```sh
-    example: Ex: Use ```user```, not ```"4ser"```
-    ```
- 2. Avoid suffix or prefix table with ```tb```
-    ```sh
-    example: Ex: Use ```user```, not ```"tb_user"```
-    ```
+
+    Ex: Ex: Use **user**, not ~~**4ser**~~
+
+ 2. Avoid suffix or prefix table with **tb**
+
+    Ex: Ex: Use **user**, not ~~**tb_user**~~
+
  3. Underscores separate words. Object name that are comprised of multiple words should be separated by underscores (ie. snake case). This includes tables, views, column, and everything else too.
-    ```sh
-    Ex: Use ```word_count``` or ```team_member_id```, not ```wordcount``` or ```wordCount```.
-    ```
+
+    Ex: Use **word_count** or **team_member_id**, not  ~~**wordcount**~~ or ~~**wordCount**~~.
+ 
  4. Tables that have relation with others table are required to have a **foreign_key**, Otherwise the relation won´t be map;
 
 
@@ -84,26 +84,15 @@ Winuvo will generate a name for the object of your foreign key based on the fore
 you can check above the words that will not be consider when generating the name:
 
 
-* Separated words with length less or equal than 2;
-    ```sh
-    Ex: ```fk_user_id```  will output -> ```user``` for the object name;
-    ```
-* Separated words starting with number
-    ```sh
-    Ex: ```1fk_user_id```  will output -> ```user``` for the object name;
-    ```
-* Entirely numeric
-    ```sh
-    Ex: ```12323_user_id```  will output -> ```user``` for the object name;
-    ```
-* All the characters as vowels
-    ```sh
-    Ex: ```aeiou_user_id```  will output -> ```user``` for the object name;
-    ```
-* All characters as consonants;
-    ```sh
-    Ex: ```cpf_user_id```  will output -> ```user``` for the object name;
-    ```
+| Description       | foreign key value   | foreign key  output object name    
+| ------------- | -------------| -------------
+| Separated words with length less or equal than 2  | fk_user_id | user
+| Separated words starting with number   | 1fk_user_id  | user 
+| Entirely numeric | 12323_user_id | user 
+| All the characters as vowels | aeiou_user_id | user 
+| All characters as consonants | cpf_user_id | user 
+| All of the previous options | 1_fk_cpf_user_tt_aaa | user 
+
 
 ## Development 
 
