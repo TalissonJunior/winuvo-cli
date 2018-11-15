@@ -7,7 +7,7 @@ import { BaseResponseCode } from '../enums';
 import {
     appSettingsTemplate, projectCsprojTemplate,
     startupConfigureServicesTemplate, startupConfigureIsDevelopmentTemplate,
-    startupConfigureIsProductionTemplate, startupConfigureExceptionTemplate, winuvoTemplate, startupImportsTemplate
+    startupConfigureIsProductionTemplate, startupConfigureExceptionTemplate, winuvoTemplate, startupImportsTemplate, gitIgnoreTemplate
 } from './templates/project';
 import { modelHandlerTemplate, dateAttributesTemplate } from './templates/model';
 import { baseRepositoryTemplate } from './templates/repository/repositories';
@@ -172,6 +172,10 @@ export class Schematics {
             }
         ];
 
+        // Create gitignore
+
+        fs.writeFileSync(path.join(projectOptions.localPath, '/.gitignore'),gitIgnoreTemplate());
+
         files.forEach(async (file, position) => {
             var destination = path.join(projectOptions.localPath, file.file);
 
@@ -279,6 +283,18 @@ export class Schematics {
         catch {
             return false;
         }
+    }
+
+    removeLineByKeyword(data: string, keyword: string): string {
+        var array = data.split('\n');
+
+        var replacementIndex = array.findIndex((line) => line.indexOf(keyword) > -1);
+
+        if (replacementIndex) {
+            array.splice(replacementIndex , 1);
+        }
+
+        return array.join('\n');
     }
 
     addAfterLine(data: string, dataToAdd: string, line: number): string {

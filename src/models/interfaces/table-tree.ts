@@ -18,4 +18,8 @@ export interface TableTree {
     middleTables: Array<TableForeignKeyReference>;
 
     isMiddleTable: boolean;
+    
+    modelName?: string;
+
+    repositoryName?: string;
 }

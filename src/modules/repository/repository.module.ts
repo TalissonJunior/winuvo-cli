@@ -7,6 +7,7 @@ import { ValidateService } from '../../services';
 import { iRepositoryTemplate } from '../../schematics/templates/repository/interfaces';
 import { repositoryTemplate } from '../../schematics/templates/repository/repositories';
 import { TableTree } from '../../models/interfaces/table-tree';
+import { Global } from '../../globals';
 
 export class RepositoryModule extends BaseModule {
 
@@ -28,7 +29,7 @@ export class RepositoryModule extends BaseModule {
         }, throwErrorIfExists);
     }
 
-    createRepository(name: string, modelName: string, callback: BaseCallback, throwErrorIfExists = true) {
+    createRepository(name: string, modelName: string, callback: BaseCallback, throwErrorIfExists = true, changeNameAndReferencesIfExists = true) {
 
         var modelPath = path.join(process.cwd(), this.config['modelPath']['main']);
         var repositoryInterfacesPath = path.join(process.cwd(), this.config['repositoryPath']['interfaces']);
@@ -58,9 +59,80 @@ export class RepositoryModule extends BaseModule {
             }
         }
         else {
-            if (this.schematics.createFile(repositoryInterfacesPath, this._createRepositoryInterfaceFileTemplate(name, modelName), repositoryInterfaceExtension)) {
+            
+            var repositoryFiles = this.getDirectoryFilesSync(repositoryPath);
+            var repositoryInterfaceFiles = this.getDirectoryFilesSync(repositoryInterfacesPath);
+            var repositoryContent, returnRepositoryName, repositoryInterfaceContent, returnInterfaceRepositoryName, re;
 
-                if (this.schematics.createFile(repositoryPath, this._createRepositoryFileTemplate(name, modelName), repositoryExtension)) {
+            for (let index = 0; index < repositoryFiles.length; index++) {
+                
+                var fileContent = fs.readFileSync(repositoryFiles[index], 'utf8');
+
+                var modelFileName = this.schematics.getStringBetween(fileContent, 'BaseRepository<', '>');
+                var repositoryName = this.schematics.getStringBetween(fileContent, 'class', ':').trim();
+                
+                if(modelFileName == modelName){
+                    re = new RegExp(repositoryName, 'g');
+
+                    if(changeNameAndReferencesIfExists){
+                        repositoryContent = fileContent.replace(re, path.parse(repositoryExtension).name);
+                        
+                        Global.repositoryReferences.push({
+                            oldReference: repositoryName,
+                            newReference: path.parse(repositoryExtension).name
+                        });
+
+                       fs.unlinkSync(repositoryFiles[index]);
+                    }
+                    else{
+                        returnRepositoryName = repositoryName;
+                    }
+                    break;                   
+                }
+            }
+
+            for (let index = 0; index < repositoryInterfaceFiles.length; index++) {
+                
+                var fileInterfaceContent = fs.readFileSync(repositoryInterfaceFiles[index], 'utf8');
+
+                var modelFileInterfaceName = this.schematics.getStringBetween(fileInterfaceContent, 'IBaseRepository<', '>');
+                var repositoryInterfaceName = this.schematics.getStringBetween(fileInterfaceContent, 'interface', ':');
+                
+                if(repositoryInterfaceContent){
+                    repositoryInterfaceContent = repositoryInterfaceContent.trim();
+                }
+
+                if(modelFileInterfaceName == modelName){
+                    re = new RegExp(repositoryInterfaceName, 'g');
+
+                    if(changeNameAndReferencesIfExists){
+                        repositoryInterfaceContent = fileInterfaceContent.replace(re,' ' + path.parse(repositoryInterfaceExtension).name + '');
+                        
+                        fs.unlinkSync(repositoryInterfaceFiles[index]);
+                    }
+                    else{
+                        returnInterfaceRepositoryName = repositoryInterfaceName;
+                    }
+                    break;                   
+                }
+            }
+            
+            if(returnRepositoryName){
+                callback(this.response.setData(repositoryInterfaceName + 'update-business'));
+                return;
+            }
+
+            if(!repositoryContent){
+                repositoryContent = this._createRepositoryFileTemplate(name, modelName);
+            }
+
+            if(!repositoryInterfaceContent){
+                repositoryInterfaceContent = this._createRepositoryInterfaceFileTemplate(name, modelName);
+            }
+
+            if (this.schematics.createFile(repositoryInterfacesPath, repositoryInterfaceContent, repositoryInterfaceExtension)) {
+
+                if (this.schematics.createFile(repositoryPath, repositoryContent, repositoryExtension)) {
 
                     this.addStartupService(repositoryInterfaceExtension, repositoryExtension, (startupResponse) => {
 

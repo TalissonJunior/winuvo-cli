@@ -12,7 +12,7 @@ import { ModelModule } from '../model/model.module';
 import { RepositoryModule } from '../repository/repository.module';
 import { ModelFile } from '../../models/interfaces';
 import { TableTree } from '../../models/interfaces/table-tree';
-import { isRegExp } from 'util';
+import { Global } from '../../globals';
 
 export class BusinessModule extends BaseModule {
     schematics: Schematics;
@@ -154,13 +154,15 @@ export class BusinessModule extends BaseModule {
                                         var promise = new Promise((resolve, reject) => {
                                             this.repositoryModule.createRepository(model.modelName, model.modelName, (createRepositoryResponse) => {
                                                 resolve(createRepositoryResponse.data);
-                                            });
+                                            }, false, false);
                                         });
 
                                         repositoryPromises.push(promise);
                                     });
 
                                     Promise.all(repositoryPromises).then(() => {
+                                        modelTableTree = this.updateModelTree(modelTableTree);
+
                                         var businessInsertFullTemplate = this._generateInsertFullTemplate(viewModelName, modelTableTree);
                                         var businessInsertFullInterfaceTemplate = this._generateInsertFullInterfaceTemplate(viewModelName);
                                         var businessInsertFullAllTemplate = this._generateInsertFullAllTemplate(viewModelName);
@@ -194,10 +196,10 @@ export class BusinessModule extends BaseModule {
                                         this.repositoryModule.createMiddleTableMethodsTemplate(modelTableTree);
 
                                         // Get Full All Repository
-                                        if(repositoryFileData.indexOf(repositoryGetFullAllTemplate) < 0){
+                                        if (repositoryFileData.indexOf(repositoryGetFullAllTemplate) < 0) {
                                             this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllTemplate));
                                         }
-                                        if(repositoryFileInterfaceData.indexOf(repositoryGetFullAllInterfaceTemplate) < 0){
+                                        if (repositoryFileInterfaceData.indexOf(repositoryGetFullAllInterfaceTemplate) < 0) {
                                             this.schematics.createFile(repositoryFileInterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositoryGetFullAllInterfaceTemplate));
                                         }
 
@@ -205,25 +207,25 @@ export class BusinessModule extends BaseModule {
                                         repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
                                         repositoryFileInterfaceData = fs.readFileSync(repositoryFileInterfacePath, 'utf8');
 
-                                        if(repositoryFileData.indexOf(repositoryGetFullByIdTemplate) < 0){
+                                        if (repositoryFileData.indexOf(repositoryGetFullByIdTemplate) < 0) {
                                             this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullByIdTemplate));
                                         }
-                                        if(repositoryFileInterfaceData.indexOf(repositortGetFullByIdInterfaceTemplate) < 0){
+                                        if (repositoryFileInterfaceData.indexOf(repositortGetFullByIdInterfaceTemplate) < 0) {
                                             this.schematics.createFile(repositoryFileInterfacePath, this.schematics.addDataToClassBody(repositoryFileInterfaceData, repositortGetFullByIdInterfaceTemplate));
                                         }
 
                                         // Get Full All Helper Repository
                                         repositoryFileData = fs.readFileSync(repositoryFilePath, 'utf8');
-                                        
-                                        if(repositoryFileData.indexOf(repositoryGetFullAllHelperTemplate) < 0){
+
+                                        if (repositoryFileData.indexOf(repositoryGetFullAllHelperTemplate) < 0) {
                                             this.schematics.createFile(repositoryFilePath, this.schematics.addDataToClassBody(repositoryFileData, repositoryGetFullAllHelperTemplate));
                                         }
 
                                         // Get Full All Business
-                                        if(businessFileData.indexOf(businessGetFullAllTemplate) < 0){
+                                        if (businessFileData.indexOf(businessGetFullAllTemplate) < 0) {
                                             this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessGetFullAllTemplate));
                                         }
-                                        if(businessFileInterfaceData.indexOf(businessGetFullAllInterfaceTemplate) < 0){
+                                        if (businessFileInterfaceData.indexOf(businessGetFullAllInterfaceTemplate) < 0) {
                                             this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessGetFullAllInterfaceTemplate));
                                         }
 
@@ -231,10 +233,10 @@ export class BusinessModule extends BaseModule {
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
 
-                                        if(businessFileData.indexOf(businessGetFullByIdTemplate) < 0){
+                                        if (businessFileData.indexOf(businessGetFullByIdTemplate) < 0) {
                                             this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessGetFullByIdTemplate));
                                         }
-                                        if(businessFileInterfaceData.indexOf(businessGetFullByIdInterfaceTemplate) < 0){
+                                        if (businessFileInterfaceData.indexOf(businessGetFullByIdInterfaceTemplate) < 0) {
                                             this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessGetFullByIdInterfaceTemplate));
                                         }
 
@@ -242,10 +244,10 @@ export class BusinessModule extends BaseModule {
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
 
-                                        if(businessFileData.indexOf(businessInsertFullTemplate) < 0){
+                                        if (businessFileData.indexOf(businessInsertFullTemplate) < 0) {
                                             this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullTemplate));
                                         }
-                                        if(businessFileInterfaceData.indexOf(businessInsertFullInterfaceTemplate) < 0){
+                                        if (businessFileInterfaceData.indexOf(businessInsertFullInterfaceTemplate) < 0) {
                                             this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullInterfaceTemplate));
                                         }
 
@@ -253,10 +255,10 @@ export class BusinessModule extends BaseModule {
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
 
-                                        if(businessFileData.indexOf(businessInsertFullAllTemplate) < 0){
+                                        if (businessFileData.indexOf(businessInsertFullAllTemplate) < 0) {
                                             this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessInsertFullAllTemplate));
                                         }
-                                        if(businessFileInterfaceData.indexOf(businessInsertFullAllInterfaceTemplate) < 0){
+                                        if (businessFileInterfaceData.indexOf(businessInsertFullAllInterfaceTemplate) < 0) {
                                             this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessInsertFullAllInterfaceTemplate));
                                         }
 
@@ -264,22 +266,28 @@ export class BusinessModule extends BaseModule {
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
 
-                                        if(businessFileData.indexOf(businessEditFullTemplate) < 0){
+                                        if (businessFileData.indexOf(businessEditFullTemplate) < 0) {
                                             this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessEditFullTemplate));
                                         }
-                                        if(businessFileInterfaceData.indexOf(businessEditFullInterfaceTemplate) < 0){
+                                        if (businessFileInterfaceData.indexOf(businessEditFullInterfaceTemplate) < 0) {
                                             this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullInterfaceTemplate));
                                         }
-                                        
+
                                         // Edit Full All Business
                                         businessFileData = fs.readFileSync(businessFilePath, 'utf8');
                                         businessFileInterfaceData = fs.readFileSync(businessFileInterfacePath, 'utf8');
 
-                                        if(businessFileData.indexOf(businessEditFullAllTemplate) < 0){
+                                        if (businessFileData.indexOf(businessEditFullAllTemplate) < 0) {
                                             this.schematics.createFile(businessFilePath, this.schematics.addDataToClassBody(businessFileData, businessEditFullAllTemplate));
                                         }
-                                        if(businessFileInterfaceData.indexOf(businessEditFullAllInterfaceTemplate) < 0){
+                                        if (businessFileInterfaceData.indexOf(businessEditFullAllInterfaceTemplate) < 0) {
                                             this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullAllInterfaceTemplate));
+                                        }
+
+                                        if(Global.repositoryReferences.length > 0){
+                                            this.updateBusinessReference(Global.repositoryReferences);
+                                            this.updateServices(Global.repositoryReferences);
+                                            Global.repositoryReferences = [];
                                         }
 
                                         callback(this.response.setData(true));
@@ -301,6 +309,114 @@ export class BusinessModule extends BaseModule {
                 callback(response);
             }
         });
+    }
+
+    updateServices(references: Array<any>) {
+
+        var startupPath = path.join(process.cwd(), 'Startup.cs');
+        var startupFileData = fs.readFileSync(startupPath, 'utf8');
+
+        references.forEach((reference) => {
+            startupFileData = this.schematics.removeLineByKeyword(startupFileData, 'services.AddTransient<I' + reference.oldReference);
+        });
+
+        this.schematics.createFile(startupPath,startupFileData);
+    }
+
+    updateBusinessReference(references: Array<any>) {
+        var businessPath = path.join(process.cwd(), this.config['businessPath']['main']);
+
+        var businessFiles = this.getDirectoryFilesSync(businessPath);
+        businessFiles = businessFiles.filter((filePath) => filePath.toLowerCase().indexOf('basebusiness') < 0);
+
+        for (let index = 0; index < businessFiles.length; index++) {
+           
+            var businessFileData = fs.readFileSync(businessFiles[index], 'utf8');
+            
+            references.forEach((reference) => {
+                var reg;
+                reg = new RegExp('\\b_' + ValidateService.lowercaseFirstLetter(reference.oldReference)+ '\\b', 'gi');
+                businessFileData = businessFileData.replace(reg, '_' + ValidateService.lowercaseFirstLetter(reference.newReference));
+
+                reg = new RegExp('\\b' + ValidateService.capitalizeFirstLetter(reference.oldReference)+ '\\b', 'gi');
+                businessFileData = businessFileData.replace(reg, ValidateService.capitalizeFirstLetter(reference.newReference));
+            });
+
+            this.schematics.createFile(businessFiles[index],businessFileData);
+        }
+    }
+
+    updateModelTree(modelTableTree: TableTree): TableTree {
+        var modelName;
+
+        var modelFilesPath = path.join(process.cwd(), this.config['modelPath']['main']);
+        var repositoriesPath = path.join(process.cwd(), this.config['repositoryPath']['main']);
+
+        var modelFiles = this.getDirectoryFilesSync(modelFilesPath);
+        var repositoryFiles = this.getDirectoryFilesSync(repositoriesPath);
+        modelFiles = modelFiles.filter((filePath) => filePath.toLowerCase().indexOf('modelhandler') < 0);
+
+        // Get models
+        for (let index = 0; index < modelFiles.length; index++) {
+
+            var modelFileData = fs.readFileSync(modelFiles[index], 'utf8');
+
+            var tableName = this.schematics.getStringBetween(modelFileData, '[Table("', '")]');
+            modelName = this.schematics.getStringAfter(modelFileData, 'public class');
+
+            if(modelTableTree.name.toLowerCase() == tableName.trim().toLowerCase()){
+                modelTableTree.modelName = modelName.trim();
+            }
+            else {
+                modelTableTree.references.forEach((table) => {
+                     if(table.referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()){
+                        table.referencedTable.modelName = modelName.trim();
+                     }
+                });
+
+                modelTableTree.middleTables.forEach((table) => {
+                    if(table.referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()){
+                        table.referencedTable.modelName = modelName.trim();
+                    }
+
+                    if(table.referencedTable.references[0].referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()){
+                        table.referencedTable.references[0].referencedTable.modelName = modelName.trim();
+                     }
+               });
+            }
+        }
+
+        // Get repositories
+        for (let index = 0; index < repositoryFiles.length; index++) {
+
+            var repositoryFileData = fs.readFileSync(repositoryFiles[index], 'utf8');
+
+            modelName = this.schematics.getStringBetween(repositoryFileData, 'BaseRepository<', '>');
+            var repositoryName = this.schematics.getStringBetween(repositoryFileData, 'public class', ':');
+
+            if(modelTableTree.modelName && modelTableTree.modelName.toLowerCase() == modelName.trim().toLowerCase()){
+                modelTableTree.repositoryName = repositoryName.trim();
+            }
+            else {
+                modelTableTree.references.forEach((table) => {
+                     if(table.referencedTable.modelName && table.referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()){
+                        table.referencedTable.repositoryName = repositoryName.trim();
+                     }
+                });
+
+                modelTableTree.middleTables.forEach((table) => {
+                    if(table.referencedTable.modelName && table.referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()){
+                        table.referencedTable.repositoryName = repositoryName.trim();
+                    }
+
+                    if(table.referencedTable.references[0].referencedTable.modelName && table.referencedTable.references[0].referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()){
+                        table.referencedTable.references[0].referencedTable.repositoryName = repositoryName.trim();
+                     }
+               });
+            }
+        }
+
+        return modelTableTree;
     }
 
     private _generateGetFullAllTemplate(): string {
@@ -365,34 +481,35 @@ export class BusinessModule extends BaseModule {
 
         // Models object
         modelTableTree.references.forEach((table) => {
-            var tableNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.name);
-            var tableNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.name);
+            var repositoryNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.repositoryName) || ValidateService.capitalizeFirstLetter(table.referencedTable.name) + 'Repository';
+            var repositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(table.referencedTable.name) + 'Repository';
 
-            methodContent += `${T + T + T}${tableNameUpper}Repository _${tableNameLower}Repository = new ${tableNameUpper}Repository(_configuration);${N}`;
+            methodContent += `${T + T + T}${repositoryNameUpper} _${repositoryNameLower} = new ${repositoryNameUpper}(_configuration);${N}`;
         });
 
         // Middle tables object
         modelTableTree.middleTables.forEach((table) => {
-            var middleTableNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
-            var middleTableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
-            var listModelNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
-            var listModelNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
+            var middleTableRepositoryNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.repositoryName) || ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name)) + 'Repository';
+            var middleTableRepositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name)) + 'Repository';
+            var listRepositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name)) + 'Repository';
+            var listRepositoryNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.references[0].referencedTable.repositoryName) || ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name)) + 'Repository';
+            var listModelNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.references[0].referencedTable.modelName) || ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
 
-            var initialization = `${T + T + T}${middleTableNameUpper}Repository _${middleTableNameLower}Repository = new ${middleTableNameUpper}Repository(_configuration);${N}`;
+            var initialization = `${T + T + T}${middleTableRepositoryNameUpper} _${middleTableRepositoryNameLower} = new ${middleTableRepositoryNameUpper}(_configuration);${N}`;
 
-            if (methodContent.indexOf(initialization) < 0){
+            if (methodContent.indexOf(initialization) < 0) {
                 methodContent += initialization;
             }
 
-            initialization = `${T + T + T}${listModelNameUpper}Repository _${listModelNameLower}Repository = new ${listModelNameUpper}Repository(_configuration);${N}`;
+            initialization = `${T + T + T}${listRepositoryNameUpper} _${listRepositoryNameLower} = new ${listRepositoryNameUpper}(_configuration);${N}`;
 
-            if (methodContent.indexOf(initialization) < 0){
+            if (methodContent.indexOf(initialization) < 0) {
                 methodContent += initialization;
             }
 
-            initialization = `${T + T + T}IEnumerable<${listModelNameUpper}> list${listModelNameUpper} = _${listModelNameLower}Repository.getAll();${N}`;
+            initialization = `${T + T + T}IEnumerable<${listModelNameUpper}> list${listModelNameUpper} = _${listRepositoryNameLower}.getAll();${N}`;
 
-            if (methodContent.indexOf(initialization) < 0){
+            if (methodContent.indexOf(initialization) < 0) {
                 methodContent += initialization;
             }
         });
@@ -401,12 +518,12 @@ export class BusinessModule extends BaseModule {
 
         // Models object
         modelTableTree.references.forEach((table) => {
-            var tableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var repositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name)) + 'Repository';
 
             var foreignKeyField = modelTableTree.columns.find(row => row.Field == table.foreignKeyReferenceTableColumnName);
             var castType = foreignKeyField.Type.indexOf('long') > -1 ? '' : '(int)';
 
-            methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.${table.foreignKeyReferenceTableColumnName} > 0 ? model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.${table.foreignKeyReferenceTableColumnName} : ${castType}_${tableNameLower}Repository.insert(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
+            methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.${table.foreignKeyReferenceTableColumnName} > 0 ? model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.${table.foreignKeyReferenceTableColumnName} : ${castType}_${repositoryNameLower}.insert(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
         });
 
         if (modelTableTree.references.length > 0) {
@@ -414,18 +531,20 @@ export class BusinessModule extends BaseModule {
         }
 
         if (modelTableTree.middleTables.length > 0) {
-            methodContent += `${T + T + T + T}long id = _repository.insert(model.ConvertTo<${ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
+            methodContent += `${T + T + T + T}long id = _repository.insert(model.ConvertTo<${modelTableTree.modelName || ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
         }
         else {
-            methodContent += `${T + T + T + T}_repository.insert(model.ConvertTo<${ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
+            methodContent += `${T + T + T + T}_repository.insert(model.ConvertTo<${modelTableTree.modelName || ValidateService.transformStringToCamelCase(modelTableTree.name)}>());${N + N}`;
         }
 
         // Models List
         modelTableTree.middleTables.forEach((table) => {
-            var middleTableNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
-            var middleTableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
-            var listModelNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
-            var listModelNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
+            var middleTableRepositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name)) + 'Repository';
+            var middleTableModelNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.modelName) || ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var middleTableModelNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.modelName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var listRepositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name)) + 'Repository';
+            var listModelNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.modelName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
+            var listModelNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.references[0].referencedTable.modelName) || ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
 
 
             var middleTableForeignKeyField = table.referencedTable.columns.find(row => row.Field == table.foreignKeyReferenceTableColumnName);
@@ -434,25 +553,25 @@ export class BusinessModule extends BaseModule {
             var middleTableChildForeignKeyField = table.referencedTable.columns.find(row => row.Field == table.referencedTable.references[0].foreignKeyColumnName);
             var middleTableChildCastType = middleTableChildForeignKeyField.Type.indexOf('long') > -1 ? '' : '(int)';
 
-            methodContent += `${T + T + T + T}List<${middleTableNameUpper}> list${middleTableNameUpper} = new List<${middleTableNameUpper}>();${N}`;
+            methodContent += `${T + T + T + T}List<${middleTableModelNameUpper}> list${middleTableModelNameUpper} = new List<${middleTableModelNameUpper}>();${N}`;
 
             methodContent += `${T + T + T + T}model.${pluralize.plural(listModelNameLower)}.ForEach((${listModelNameLower}) => ${N +
                 T + T + T + T}{${N}`;
 
-            methodContent += `${T + T + T + T + T}${middleTableNameUpper} ${middleTableNameLower} = new ${middleTableNameUpper}();${N}`;
-            methodContent += `${T + T + T + T + T}${middleTableNameLower}.${table.foreignKeyReferenceTableColumnName} = ${middleTableCastType}id;${N}`;
+            methodContent += `${T + T + T + T + T}${middleTableModelNameUpper} ${middleTableModelNameLower} = new ${middleTableModelNameUpper}();${N}`;
+            methodContent += `${T + T + T + T + T}${middleTableModelNameLower}.${table.foreignKeyReferenceTableColumnName} = ${middleTableCastType}id;${N}`;
 
-            methodContent += `${T + T + T + T + T}if(${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} > 0) ${middleTableNameLower}.${table.referencedTable.references[0].foreignKeyColumnName} = ${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName};${N}`;
+            methodContent += `${T + T + T + T + T}if(${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} > 0) ${middleTableModelNameLower}.${table.referencedTable.references[0].foreignKeyColumnName} = ${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName};${N}`;
             methodContent += `${T + T + T + T + T}else${N + T + T + T + T + T}{${N}`;
 
             methodContent += `${T + T + T + T + T + T}${listModelNameUpper} aux${listModelNameUpper} = list${listModelNameUpper}.ToList().Find(x => x.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} == ${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName});${N}`;
-            methodContent += `${T + T + T + T + T + T}${middleTableNameLower}.${table.referencedTable.references[0].foreignKeyColumnName} = aux${listModelNameUpper} != null ? aux${listModelNameUpper}.id : ${middleTableChildCastType}_${listModelNameLower}Repository.insert(${listModelNameLower});${N}`;
+            methodContent += `${T + T + T + T + T + T}${middleTableModelNameLower}.${table.referencedTable.references[0].foreignKeyColumnName} = aux${listModelNameUpper} != null ? aux${listModelNameUpper}.id : ${middleTableChildCastType}_${listRepositoryNameLower}.insert(${listModelNameLower});${N}`;
             methodContent += `${T + T + T + T + T}}${N + N}`;
 
-            methodContent += `${T + T + T + T + T}list${middleTableNameUpper}.Add(${middleTableNameLower});${N}`;
+            methodContent += `${T + T + T + T + T}list${middleTableModelNameUpper}.Add(${middleTableModelNameLower});${N}`;
             methodContent += `${T + T + T + T}});${N + N}`;
 
-            methodContent += `${T + T + T + T}_${middleTableNameLower}Repository.insert(list${middleTableNameUpper});${N + N}`;
+            methodContent += `${T + T + T + T}_${middleTableRepositoryNameLower}.insert(list${middleTableModelNameUpper});${N + N}`;
         });
 
         methodContent += `${T + T + T + T}return _baseResponse.setData(true);${N}`;
@@ -507,64 +626,82 @@ export class BusinessModule extends BaseModule {
 
         // Models object
         modelTableTree.references.forEach((table) => {
-            var tableNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.name);
-            var tableNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.name);
+            var repositoryNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.repositoryName) || ValidateService.capitalizeFirstLetter(table.referencedTable.name) + 'Repository';
+            var repositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(table.referencedTable.name) + 'Repository';
 
-            methodContent += `${T + T + T}${tableNameUpper}Repository _${tableNameLower}Repository = new ${tableNameUpper}Repository(_configuration);${N}`;
+            methodContent += `${T + T + T}${repositoryNameUpper} _${repositoryNameLower} = new ${repositoryNameUpper}(_configuration);${N}`;
         });
 
         // Middle tables object
         modelTableTree.middleTables.forEach((table) => {
-            var tableNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
-            var tableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var middleTableRepositoryNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.repositoryName) || ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name)) + 'Repository';
+            var middleTableRepositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name)) + 'Repository';
+            var listRepositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name)) + 'Repository';
+            var listRepositoryNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.references[0].referencedTable.repositoryName) || ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name)) + 'Repository';
 
-            methodContent += `${T + T + T}${tableNameUpper}Repository _${tableNameLower}Repository = new ${tableNameUpper}Repository(_configuration);${N}`;
+            var initialization = `${T + T + T}${middleTableRepositoryNameUpper} _${middleTableRepositoryNameLower} = new ${middleTableRepositoryNameUpper}(_configuration);${N}`;
+
+            if (methodContent.indexOf(initialization) < 0) {
+                methodContent += initialization;
+            }
+            
+            initialization = `${T + T + T}${listRepositoryNameUpper} _${listRepositoryNameLower} = new ${listRepositoryNameUpper}(_configuration);${N}`;
+
+            if (methodContent.indexOf(initialization) < 0) {
+                methodContent += initialization;
+            }
         });
 
         methodContent += `${N + T + T + T}try ${N + T + T + T}{${N}`;
 
         // Models object
         modelTableTree.references.forEach((table) => {
-            var tableNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.name);
+            var repositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(table.referencedTable.name) + 'Repository';
 
             methodContent += `${T + T + T + T}if (model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.id > 0){${N}`;
-            methodContent += `${T + T + T + T + T} _${tableNameLower}Repository.update(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
+            methodContent += `${T + T + T + T + T} _${repositoryNameLower}.update(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
             methodContent += `${T + T + T + T}}${N}`;
             methodContent += `${T + T + T + T}else {${N}`;
-            methodContent += `${T + T + T + T + T} _${tableNameLower}Repository.insert(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
+            methodContent += `${T + T + T + T + T} _${repositoryNameLower}.insert(model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)});${N}`;
             methodContent += `${T + T + T + T}}${N + N}`;
 
             methodContent += `${T + T + T + T}model.${table.foreignKeyColumnName} = model.${ValidateService.getTheForeignKeyName(table.foreignKeyColumnName)}.${table.foreignKeyReferenceTableColumnName};${N}`;
         });
 
-        methodContent += `${T + T + T + T}_repository.update(model.ConvertTo<${ValidateService.capitalizeFirstLetter(modelTableTree.name)}>());${N + N}`;
+        methodContent += `${T + T + T + T}_repository.update(model.ConvertTo<${modelTableTree.modelName || ValidateService.capitalizeFirstLetter(modelTableTree.name)}>());${N + N}`;
 
         // List tables object
         modelTableTree.middleTables.forEach((table) => {
-            var middleTableNameUpper = ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
-            var middleTableNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
-            var listModelNameLower = ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
+            var middleTableRepositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name)) + 'Repository';
+            var middleTableModelNameUpper = ValidateService.capitalizeFirstLetter(table.referencedTable.modelName) || ValidateService.capitalizeFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var middleTableModelNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.modelName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.name));
+            var listModelNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.modelName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name));
+            var listRepositoryNameLower = ValidateService.lowercaseFirstLetter(table.referencedTable.references[0].referencedTable.repositoryName) || ValidateService.lowercaseFirstLetter(ValidateService.transformStringToCamelCase(table.referencedTable.references[0].referencedTable.name)) + 'Repository';
 
             methodContent += `${T + T + T + T}if (model.${pluralize.plural(listModelNameLower)}.Count > 0)${N}`;
             methodContent += `${T + T + T + T}{${N}`;
-            methodContent += `${T + T + T + T + T}List<${middleTableNameUpper}> list${middleTableNameUpper} = _${middleTableNameLower}Repository.getAllBy${ValidateService.capitalizeFirstLetter(modelTableTree.name)}Id(model.id);${N}`;
-            methodContent += `${T + T + T + T + T}if(list${middleTableNameUpper}.Count > 0) {${N}`;
-            methodContent += `${T + T + T + T + T + T}List<${middleTableNameUpper}> list${middleTableNameUpper}ToDelete = list${middleTableNameUpper}.Where((${middleTableNameLower}) => model.${pluralize.plural(listModelNameLower)}.Select((${listModelNameLower}) => ${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} != ${middleTableNameLower}.${table.referencedTable.references[0].foreignKeyColumnName}) != null).ToList();${N}`;
-            methodContent += `${T + T + T + T + T + T}_${middleTableNameLower}Repository.delete(list${middleTableNameUpper}ToDelete);${N}`;
+            methodContent += `${T + T + T + T + T}List<${middleTableModelNameUpper}> list${middleTableModelNameUpper} = _${middleTableRepositoryNameLower}.getAllBy${modelTableTree.modelName || ValidateService.capitalizeFirstLetter(modelTableTree.name)}Id(model.id);${N}`;
+            methodContent += `${T + T + T + T + T}if(list${middleTableModelNameUpper}.Count > 0) {${N}`;
+            methodContent += `${T + T + T + T + T + T}List<${middleTableModelNameUpper}> list${middleTableModelNameUpper}ToDelete = list${middleTableModelNameUpper}.Where((${middleTableModelNameLower}) => model.${pluralize.plural(listModelNameLower)}.Select((${listModelNameLower}) => ${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} != ${middleTableModelNameLower}.${table.referencedTable.references[0].foreignKeyColumnName}) != null).ToList();${N}`;
+            methodContent += `${T + T + T + T + T + T}_${middleTableRepositoryNameLower}.delete(list${middleTableModelNameUpper}ToDelete);${N}`;
             methodContent += `${T + T + T + T + T}}${N + N}`;
 
             methodContent += `${T + T + T + T + T}model.${pluralize.plural(listModelNameLower)}.ForEach((${listModelNameLower}) => {${N + N}`;
-            methodContent += `${T + T + T + T + T + T}${middleTableNameUpper} ${middleTableNameLower} = new ${middleTableNameUpper}() {${N}`;
+            methodContent += `${T + T + T + T + T + T}if(${listModelNameLower}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName} == 0) {${N}`;
+            methodContent += `${T + T + T + T + T + T + T}_${listRepositoryNameLower}.insert(${listModelNameLower});${N}`;
+            methodContent += `${T + T + T + T + T + T}}${N + N}`;
+
+            methodContent += `${T + T + T + T + T + T}${middleTableModelNameUpper} ${middleTableModelNameLower} = new ${middleTableModelNameUpper}() {${N}`;
             methodContent += `${T + T + T + T + T + T + T}${table.referencedTable.references[0].foreignKeyColumnName} = ${table.referencedTable.references[0].referencedTable.name}.${table.referencedTable.references[0].foreignKeyReferenceTableColumnName},${N}`;
             methodContent += `${T + T + T + T + T + T + T}${table.foreignKeyReferenceTableColumnName} = model.${table.foreignKeyColumnName}${N}`;
             methodContent += `${T + T + T + T + T + T}};${N + N}`;
 
-            methodContent += `${T + T + T + T + T + T}_${middleTableNameLower}Repository.insert(${middleTableNameLower});${N}`;
+            methodContent += `${T + T + T + T + T + T}_${middleTableRepositoryNameLower}.insert(${middleTableModelNameLower});${N}`;
             methodContent += `${T + T + T + T + T}});${N + N}`;
 
             methodContent += `${T + T + T + T}}${N}`;
             methodContent += `${T + T + T + T}else {${N}`;
-            methodContent += `${T + T + T + T + T}_${middleTableNameLower}Repository.deleteAllBy${ValidateService.capitalizeFirstLetter(modelTableTree.name)}Id(model.id);${N}`;
+            methodContent += `${T + T + T + T + T}_${middleTableRepositoryNameLower}.deleteAllBy${modelTableTree.modelName || ValidateService.capitalizeFirstLetter(modelTableTree.name)}Id(model.id);${N}`;
             methodContent += `${T + T + T + T}}${N + N}`;
         });
 
