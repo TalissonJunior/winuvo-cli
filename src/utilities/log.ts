@@ -46,7 +46,7 @@ export class Log {
             return;
         }
         
-        if (message) {
+        if (message && message.length > 0) {
 
             while (message.indexOf('<update/>') > -1) {
                 message = message.replace('<update/>', Color.YellowNoReset + 'UPDATED ' + Color.Reset);

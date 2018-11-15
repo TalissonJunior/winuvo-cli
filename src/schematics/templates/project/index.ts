@@ -3,3 +3,4 @@ export * from './projectCsproj.template';
 export * from './startup.template';
 export * from './winuvo.template';
 export * from './gitignore.template';
+export * from './jwt-auth.controller.template';

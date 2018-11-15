@@ -94,6 +94,14 @@ you can check above the words that will not be consider when generating the name
 | All of the previous options | 1_fk_cpf_user_tt_aaa | user 
 
 
+### Libraries
+
+Winuvo-cli has some built in libraries, in winuvo-cli a library is a set of common components that are frequently used in projects, for example JWToken Authentication, we listed below the available libraries.
+
+| Name       | description   | command    
+| ------------- | -------------| -------------
+| JWTAuth  | JSON-based open standard (RFC 7519) for creating access tokens that assert some number of claims | ```winuvo library add JWTAuth```
+
 ## Development 
 
 ### Prerequisites

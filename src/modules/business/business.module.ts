@@ -71,19 +71,19 @@ export class BusinessModule extends BaseModule {
 
                 if (this.schematics.createFile(businessPath, this._createBusinessFileTemplate(name, modelName), businessNameWithExtension)) {
 
-                    this.addStartupService(businessInterfaceExtension, businessNameWithExtension, (startupResponse) => {
-                        var response = '';
-                        if (startupResponse.data) {
-                            var logStartup = startupResponse.data == true ? '' : '\n' + startupResponse.data;
-                            response = `<create/> ${path.join(businessInterfacesPath, businessInterfaceExtension)}\n<create/> ${path.join(businessPath, businessNameWithExtension)}` + logStartup;
-                        }
-                        else {
-                            response = `<create/> ${path.join(businessInterfacesPath, businessInterfaceExtension)}\n<create/> ${path.join(businessPath, businessNameWithExtension)}`;
-                        }
+                    var result = this.addStartupService(businessInterfaceExtension, businessNameWithExtension);
+                    var response = '';
 
-                        this._generateFullMethods(businessNameWithExtension, modelName, name, () => {
-                            callback(this.response.setData(response));
-                        });
+                    if (result != 'true') {
+                        var logStartup = result.indexOf('<update/>') > -1 ? '' : '\n' + result;
+                        response = `<create/> ${path.join(businessInterfacesPath, businessInterfaceExtension)}\n<create/> ${path.join(businessPath, businessNameWithExtension)}` + logStartup;
+                    }
+                    else {
+                        response = `<create/> ${path.join(businessInterfacesPath, businessInterfaceExtension)}\n<create/> ${path.join(businessPath, businessNameWithExtension)}`;
+                    }
+
+                    this._generateFullMethods(businessNameWithExtension, modelName, name, () => {
+                        callback(this.response.setData(response));
                     });
                 }
                 else {
@@ -284,7 +284,7 @@ export class BusinessModule extends BaseModule {
                                             this.schematics.createFile(businessFileInterfacePath, this.schematics.addDataToClassBody(businessFileInterfaceData, businessEditFullAllInterfaceTemplate));
                                         }
 
-                                        if(Global.repositoryReferences.length > 0){
+                                        if (Global.repositoryReferences.length > 0) {
                                             this.updateBusinessReference(Global.repositoryReferences);
                                             this.updateServices(Global.repositoryReferences);
                                             Global.repositoryReferences = [];
@@ -320,7 +320,7 @@ export class BusinessModule extends BaseModule {
             startupFileData = this.schematics.removeLineByKeyword(startupFileData, 'services.AddTransient<I' + reference.oldReference);
         });
 
-        this.schematics.createFile(startupPath,startupFileData);
+        this.schematics.createFile(startupPath, startupFileData);
     }
 
     updateBusinessReference(references: Array<any>) {
@@ -330,19 +330,19 @@ export class BusinessModule extends BaseModule {
         businessFiles = businessFiles.filter((filePath) => filePath.toLowerCase().indexOf('basebusiness') < 0);
 
         for (let index = 0; index < businessFiles.length; index++) {
-           
+
             var businessFileData = fs.readFileSync(businessFiles[index], 'utf8');
-            
+
             references.forEach((reference) => {
                 var reg;
-                reg = new RegExp('\\b_' + ValidateService.lowercaseFirstLetter(reference.oldReference)+ '\\b', 'gi');
+                reg = new RegExp('\\b_' + ValidateService.lowercaseFirstLetter(reference.oldReference) + '\\b', 'gi');
                 businessFileData = businessFileData.replace(reg, '_' + ValidateService.lowercaseFirstLetter(reference.newReference));
 
-                reg = new RegExp('\\b' + ValidateService.capitalizeFirstLetter(reference.oldReference)+ '\\b', 'gi');
+                reg = new RegExp('\\b' + ValidateService.capitalizeFirstLetter(reference.oldReference) + '\\b', 'gi');
                 businessFileData = businessFileData.replace(reg, ValidateService.capitalizeFirstLetter(reference.newReference));
             });
 
-            this.schematics.createFile(businessFiles[index],businessFileData);
+            this.schematics.createFile(businessFiles[index], businessFileData);
         }
     }
 
@@ -364,25 +364,25 @@ export class BusinessModule extends BaseModule {
             var tableName = this.schematics.getStringBetween(modelFileData, '[Table("', '")]');
             modelName = this.schematics.getStringAfter(modelFileData, 'public class');
 
-            if(modelTableTree.name.toLowerCase() == tableName.trim().toLowerCase()){
+            if (modelTableTree.name.toLowerCase() == tableName.trim().toLowerCase()) {
                 modelTableTree.modelName = modelName.trim();
             }
             else {
                 modelTableTree.references.forEach((table) => {
-                     if(table.referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()){
+                    if (table.referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()) {
                         table.referencedTable.modelName = modelName.trim();
-                     }
+                    }
                 });
 
                 modelTableTree.middleTables.forEach((table) => {
-                    if(table.referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()){
+                    if (table.referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()) {
                         table.referencedTable.modelName = modelName.trim();
                     }
 
-                    if(table.referencedTable.references[0].referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()){
+                    if (table.referencedTable.references[0].referencedTable.name.toLowerCase() == tableName.trim().toLowerCase()) {
                         table.referencedTable.references[0].referencedTable.modelName = modelName.trim();
-                     }
-               });
+                    }
+                });
             }
         }
 
@@ -394,25 +394,25 @@ export class BusinessModule extends BaseModule {
             modelName = this.schematics.getStringBetween(repositoryFileData, 'BaseRepository<', '>');
             var repositoryName = this.schematics.getStringBetween(repositoryFileData, 'public class', ':');
 
-            if(modelTableTree.modelName && modelTableTree.modelName.toLowerCase() == modelName.trim().toLowerCase()){
+            if (modelTableTree.modelName && modelTableTree.modelName.toLowerCase() == modelName.trim().toLowerCase()) {
                 modelTableTree.repositoryName = repositoryName.trim();
             }
             else {
                 modelTableTree.references.forEach((table) => {
-                     if(table.referencedTable.modelName && table.referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()){
+                    if (table.referencedTable.modelName && table.referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()) {
                         table.referencedTable.repositoryName = repositoryName.trim();
-                     }
+                    }
                 });
 
                 modelTableTree.middleTables.forEach((table) => {
-                    if(table.referencedTable.modelName && table.referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()){
+                    if (table.referencedTable.modelName && table.referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()) {
                         table.referencedTable.repositoryName = repositoryName.trim();
                     }
 
-                    if(table.referencedTable.references[0].referencedTable.modelName && table.referencedTable.references[0].referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()){
+                    if (table.referencedTable.references[0].referencedTable.modelName && table.referencedTable.references[0].referencedTable.modelName.toLowerCase() == modelName.trim().toLowerCase()) {
                         table.referencedTable.references[0].referencedTable.repositoryName = repositoryName.trim();
-                     }
-               });
+                    }
+                });
             }
         }
 
@@ -644,7 +644,7 @@ export class BusinessModule extends BaseModule {
             if (methodContent.indexOf(initialization) < 0) {
                 methodContent += initialization;
             }
-            
+
             initialization = `${T + T + T}${listRepositoryNameUpper} _${listRepositoryNameLower} = new ${listRepositoryNameUpper}(_configuration);${N}`;
 
             if (methodContent.indexOf(initialization) < 0) {

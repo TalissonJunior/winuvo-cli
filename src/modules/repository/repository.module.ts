@@ -134,16 +134,15 @@ export class RepositoryModule extends BaseModule {
 
                 if (this.schematics.createFile(repositoryPath, repositoryContent, repositoryExtension)) {
 
-                    this.addStartupService(repositoryInterfaceExtension, repositoryExtension, (startupResponse) => {
+                    var result = this.addStartupService(repositoryInterfaceExtension, repositoryExtension);
 
-                        if (startupResponse.data) {
-                            var logStartup = startupResponse.data == true ? '' : '\n' + startupResponse.data;
+                        if (result != 'true') {
+                            var logStartup = result.indexOf('<update/>') > -1 ? '' : '\n' + result;
                             callback(this.response.setData(`<create/> ${path.join(repositoryInterfacesPath, repositoryInterfaceExtension)}\n<create/> ${path.join(repositoryPath, repositoryExtension)}` + logStartup));
                         }
                         else {
                             callback(this.response.setData(`<create/> ${path.join(repositoryInterfacesPath, repositoryInterfaceExtension)}\n<create/> ${path.join(repositoryPath, repositoryExtension)}`));
                         }
-                    });
                 }
                 else {
                     callback(this.response.setError('Fail to create repository', ' Could not create the repository'));

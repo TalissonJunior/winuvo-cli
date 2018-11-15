@@ -13,7 +13,6 @@ import { ValidateService } from '../../services';
 import { validCreatedDateFields, validUpdatedDateFields } from './constants/valid-create-update-date-fields';
 import { viewModelTemplate } from '../../schematics/templates/model';
 
-
 export class ModelModule extends BaseModule {
 
     constructor(spinner?: ora) {
@@ -26,10 +25,6 @@ export class ModelModule extends BaseModule {
             var tableName = options.name == options.table ? options.name : options.table;
 
             if (databaseResponse.data) {
-
-                  //REMOVE
-                  fs.writeFileSync(path.join(process.cwd() + 'teste.json'), JSON.stringify(this.database.tablesTree));
-                  //REMOVE
 
                 this.createModel(tableName, options.name, (response) => {
                     if (response.data) {

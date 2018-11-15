@@ -58,6 +58,108 @@ export class DatabaseModule {
         }
     }
 
+    checkIfTableExists(tableName: string): boolean {
+        return this.tables.some((table) => table.name == tableName);
+    }
+
+    executeQuery(tableName: string, sql: string, callback: BaseCallback): void {
+        var conn = mysql.createConnection({
+            host: this.connectionString.server,
+            port: this.connectionString.port,
+            database: this.connectionString.database,
+            user: this.connectionString.user,
+            password: this.connectionString.password
+        });
+
+        conn.connect((err) => {
+            if (err) {
+                callback(this.response.setError(BaseResponseCode.INVALID_CONNECTION_STRING, err.message));
+            }
+            else {
+
+                conn.query(sql, (error: mysql.MysqlError) => {
+                    if (error) {
+                        callback(this.response.setError(`Failed to create table ${tableName}`, error.message));
+                    }
+                    else{
+                        callback(this.response.setData(true));
+                    }
+                });
+            }
+        });
+    }
+
+    updateTableProperties(tableName: string, missingProperties: Array<TableColumn>, callback: BaseCallback) {
+
+        var conn = mysql.createConnection({
+            host: this.connectionString.server,
+            port: this.connectionString.port,
+            database: this.connectionString.database,
+            user: this.connectionString.user,
+            password: this.connectionString.password
+        });
+
+        conn.connect((err) => {
+            if (err) {
+                callback(this.response.setError(BaseResponseCode.INVALID_CONNECTION_STRING, err.message));
+            }
+            else {
+
+                var sql = 'ALTER TABLE ' + tableName;
+                for (let index = 0; index < missingProperties.length; index++) {
+
+                    var notNull = missingProperties[index].Null.toLowerCase() == 'no' ? ' NOT NULL' : ' NULL';
+                    var defaultValue = missingProperties[index].Default || '';
+
+                    sql += ' ADD COLUMN ' + missingProperties[index].Field + ' ' + missingProperties[index].Type + ' ' + defaultValue + '' + notNull + ',';
+                }
+
+                sql = sql.substring(0, sql.length - 1);
+
+                conn.query(sql, (error: mysql.MysqlError, data) => {
+                    if (error) {
+                        callback(this.response.setError(`Fail to update table ${tableName} properties`, error.message));
+                    }
+                    else {
+                        callback(this.response.setData(true));
+                    }
+                });
+            }
+        });
+    }
+
+    getTable(tableName: string, callback: BaseCallback) {
+
+        var conn = mysql.createConnection({
+            host: this.connectionString.server,
+            port: this.connectionString.port,
+            database: this.connectionString.database,
+            user: this.connectionString.user,
+            password: this.connectionString.password
+        });
+
+        conn.connect((err) => {
+            if (err) {
+                callback(this.response.setError(BaseResponseCode.INVALID_CONNECTION_STRING, err.message));
+            }
+            else {
+
+                conn.query('DESCRIBE ' + tableName, (err: mysql.MysqlError, tableColumns: Array<TableColumn>) => {
+                    if (err) {
+                        callback(this.response.setError(`Insuficient previlegies in database "${this.connectionString.database}" for table ${tableName}`, err.message));
+                    }
+
+                    var table = {
+                        name: tableName,
+                        columns: tableColumns
+                    } as TableTree;
+
+                    callback(this.response.setData(table));
+                });
+            }
+        });
+    }
+
     /**
      * @description Validate the connection string, check if contains all the properties, if so parse it
      * @param connection connection string
@@ -98,7 +200,7 @@ export class DatabaseModule {
                 var arrayPropertyAndValue = property.split(propertySeparator);
 
                 if (arrayPropertyAndValue.length != 2) {
-                    callback(this.response.setError(BaseResponseCode.FAIL_TO_CREATE_PROJECT_INVALID_CONNECTION_STRING, `Connection string "property${propertySeparator}value" should be separated by "${propertySeparator}" ex: localhost${propertySeparator}mylocalhost;`));
+                    callback(this.response.setError(BaseResponseCode.FAIL_TO_CREATE_PROJECT_INVALID_CONNECTION_STRING, `Connection string "property${propertySeparator}value" should be separated by "${propertySeparator}" ex: localhost${propertySeparator} mylocalhost; `));
                     return;
                 }
                 else {
@@ -111,7 +213,7 @@ export class DatabaseModule {
             });
         }
         else {
-            callback(this.response.setError(BaseResponseCode.FAIL_TO_CREATE_PROJECT_INVALID_CONNECTION_STRING, `Connection string properties should be separated by ";" ex: localhost${propertySeparator}mylocalhost;port${propertySeparator}3306;`));
+            callback(this.response.setError(BaseResponseCode.FAIL_TO_CREATE_PROJECT_INVALID_CONNECTION_STRING, `Connection string properties should be separated by ";" ex: localhost${propertySeparator} mylocalhost; port${propertySeparator} 3306; `));
         }
     }
 
@@ -294,10 +396,10 @@ export class DatabaseModule {
 
             var promise = new Promise((resolve, reject) => {
                 conn.query(`
-               SELECT TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME
-               FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-               WHERE REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}' AND
-               REFERENCED_TABLE_NAME = '${table.name}';`,
+                SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                WHERE REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}' AND
+                REFERENCED_TABLE_NAME = '${table.name}'; `,
                     (err: mysql.MysqlError, tableRows: Array<any>) => {
                         if (err) {
                             reject(err.message);
@@ -323,11 +425,11 @@ export class DatabaseModule {
                                 // get the middleTable referenced table
 
                                 conn.query(`
-                                select COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_COLUMN_NAME, REFERENCED_TABLE_NAME
-                                from information_schema.KEY_COLUMN_USAGE
-                                where TABLE_NAME = '${middleTableOutput.referencedTable.name}'
-                                and REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}'
-                                `,
+                select COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_COLUMN_NAME, REFERENCED_TABLE_NAME
+                from information_schema.KEY_COLUMN_USAGE
+                where TABLE_NAME = '${middleTableOutput.referencedTable.name}'
+                and REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}'
+                    `,
                                     (err: mysql.MysqlError, referencedTableRows: Array<any>) => {
                                         if (err) {
                                             reject(err.message);
@@ -380,11 +482,11 @@ export class DatabaseModule {
     private _createTableChildTree(conn: mysql.Connection, table: TableTree, callback: BaseCallback) {
 
         conn.query(`
-            select COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_COLUMN_NAME, REFERENCED_TABLE_NAME
-            from information_schema.KEY_COLUMN_USAGE
-            where TABLE_NAME = '${table.name}'
-            and REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}'
-            `,
+                select COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_COLUMN_NAME, REFERENCED_TABLE_NAME
+                from information_schema.KEY_COLUMN_USAGE
+                where TABLE_NAME = '${table.name}'
+                and REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}'
+                    `,
             (err: mysql.MysqlError, rows: Array<any>) => {
                 if (err) {
 
@@ -411,8 +513,8 @@ export class DatabaseModule {
                             });
 
                         }
-                        catch(e){
-                            if(e.message == "Cannot read property 'name' of undefined"){
+                        catch (e) {
+                            if (e.message == "Cannot read property 'name' of undefined") {
                                 callback(this.response.setError('Database foreign key error, please check your database foreign keys', `The table "${table.name}" with the foreign key "${rows[index]['COLUMN_NAME']}" points to a nonexistent table called "${rows[index]['REFERENCED_TABLE_NAME']}"`));
                             }
                             return;
@@ -433,11 +535,11 @@ export class DatabaseModule {
     private _createTableTree(conn: mysql.Connection, table: TableTree, callback: BaseCallback) {
 
         conn.query(`
-            select COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_COLUMN_NAME, REFERENCED_TABLE_NAME
-            from information_schema.KEY_COLUMN_USAGE
-            where TABLE_NAME = '${table.name}'
-            and REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}'
-            `,
+                select COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_COLUMN_NAME, REFERENCED_TABLE_NAME
+                from information_schema.KEY_COLUMN_USAGE
+                where TABLE_NAME = '${table.name}'
+                and REFERENCED_TABLE_SCHEMA = '${this.connectionString.database}'
+                    `,
             (err: mysql.MysqlError, rows: Array<any>) => {
                 if (err) {
                     callback(this.response.setError(`Insuficient previlegies in database "${this.connectionString.database}" for table ${table.name}`, err.message));

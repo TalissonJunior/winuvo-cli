@@ -35,7 +35,7 @@ export class BaseModule {
      * @param interfaceClasse 'INameRepository | IUserBusiness | IUserTeste'
      * @param classe 'NameRepository | UserBusiness | UserTeste'
      */
-    addStartupService(interfaceClasse: string, classe: string, callback: BaseCallback) {
+    addStartupService(interfaceClasse: string, classe: string): string {
         var startupPath = path.join(process.cwd(), 'Startup.cs');
 
         let instream = fs.createReadStream(startupPath),
@@ -47,22 +47,22 @@ export class BaseModule {
             var data = fs.readFileSync(startupPath, 'utf8');
 
             if (data.indexOf(serviceTemplate) > -1) {
-                callback(this.response.setData(true));
+                return 'true';
             }
             else {
                 var addServiceMVC = 'services.AddMvc()';
                 data = this.schematics.addAfterKeyword(data, serviceTemplate, addServiceMVC);
 
                 if (this.schematics.createFile(startupPath, data)) {
-                    callback(this.response.setData(`<update/> ${startupPath}`));
+                    return `<update/> ${startupPath}`;
                 }
                 else {
-                    callback(this.response.setError('Fail to update file', `Couldn't update file ${startupPath}`));
+                    return `Couldn't update file ${startupPath}`;
                 }
             }
         }
         catch {
-            callback(this.response.setError('Fail find file', `Couldn't find file ${startupPath}`));
+            return `Couldn't find file ${startupPath}`;
         }
     }
 

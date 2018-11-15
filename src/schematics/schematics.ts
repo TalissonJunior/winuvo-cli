@@ -7,7 +7,7 @@ import { BaseResponseCode } from '../enums';
 import {
     appSettingsTemplate, projectCsprojTemplate,
     startupConfigureServicesTemplate, startupConfigureIsDevelopmentTemplate,
-    startupConfigureIsProductionTemplate, startupConfigureExceptionTemplate, winuvoTemplate, startupImportsTemplate, gitIgnoreTemplate
+    startupConfigureIsProductionTemplate, startupConfigureExceptionTemplate, winuvoTemplate, startupImportsTemplate, gitIgnoreTemplate,
 } from './templates/project';
 import { modelHandlerTemplate, dateAttributesTemplate } from './templates/model';
 import { baseRepositoryTemplate } from './templates/repository/repositories';

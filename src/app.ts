@@ -1,19 +1,22 @@
 import * as program from 'commander';
+import * as inquirer from 'inquirer';
 import * as json from '../package.json';
-import { NewCommand, GenerateCommand } from './commands';
+import { NewCommand, GenerateCommand, LibraryCommand } from './commands';
 import { Log } from './utilities';
 import { ProjectValidator } from './modules';
-import { GenerateType, ProjectType } from './enums';
+import { GenerateType, ProjectType, LibraryType, ActionType } from './enums';
 import { ProjectOptions, ModelOptions } from './models';
 import { ValidateService } from './services';
 
 class App {
     private newCommand: NewCommand;
     private generateCommand: GenerateCommand;
+    private libraryCommand: LibraryCommand;
 
     constructor() {
         this.newCommand = new NewCommand();
         this.generateCommand = new GenerateCommand();
+        this.libraryCommand = new LibraryCommand();
         this.initialize();
     }
 
@@ -236,7 +239,7 @@ class App {
                         this.generateCommand.generateModel(modelOptions, (response) => {
 
                             if (response.data) {
-                               
+
                                 this.generateCommand.spinner.clear();
                                 Log.log(response.data);
 
@@ -300,7 +303,144 @@ class App {
                 }
             });
 
+        // LIBRARY COMMAND
+        program
+            .command("library [<action>] [<name>]")
+            .alias('lib')
+            .description('Generates model.')
+            .action((action: ActionType, name: LibraryType) => {
 
+                if (ValidateService.isInsideDotNetCoreProject()) {
+
+                    if (action == ActionType.ADD && name.toLowerCase() == LibraryType.JWTAUTH.toLowerCase()) {
+                        inquirer.prompt({
+                            type: 'list',
+                            name: 'tableState',
+                            choices: [
+                                {
+                                    name: 'Use a existent Table',
+                                    value: 'use'
+                                },
+                                {
+                                    name: 'Let JWToken Auth library create a table',
+                                    value: 'create'
+                                }
+                            ],
+                            message: `JWTToken Library needs a table as reference?`
+                        }).then((answer: any) => {
+
+                            if (answer.tableState == 'use') {
+                                this.libraryCommand.spinner.start(`Validating connection...`);
+
+                                this.libraryCommand.jwt.database.connect(null, (response) => {
+
+                                    if (response.data) {
+                                        this.libraryCommand.spinner.succeed();
+
+                                        inquirer.prompt({
+                                            type: 'input',
+                                            name: 'tableName',
+                                            message: `What is the name of the table?`,
+                                            validate: (value: string) => {
+                                                if (this.libraryCommand.jwt.database.checkIfTableExists(value)) {
+                                                    return true;
+                                                }
+                                                else {
+                                                    return `Couldn´t find a table "${value}" for database "${this.libraryCommand.jwt.database.connectionString.database}".`;
+                                                }
+                                            }
+                                        })
+                                        .then((tableAnswer: any) => {
+                                            this.libraryCommand.addJWTokenAuth(tableAnswer.tableName, (response) => {
+                                                if (response.data) {
+                                                    Log.log(response.data);
+                                                    this.libraryCommand.spinner.start('Successfully created JWTAuth');
+                                                    this.libraryCommand.spinner.succeed();
+                                                    process.exit();
+                                                }
+                                                else {
+                                                    this.libraryCommand.spinner.clear();
+                                                    
+                                                    if(response.error.code == 'missing-table-properties'){
+                                                        
+                                                        inquirer.prompt({
+                                                            type: 'list',
+                                                            name: 'permissionToUpdateTable',
+                                                            choices: [
+                                                                {
+                                                                    name: `Allow JWToken Library to add properties to table "${tableAnswer.tableName}"?`,
+                                                                    value: true
+                                                                },
+                                                                {
+                                                                    name: `Do not allow JWToken Library to add properties to table "${tableAnswer.tableName}" ? (this will quit the process)`,
+                                                                    value: false
+                                                                }
+                                                            ],
+                                                            message: `${tableAnswer.tableName} is missing properties ${response.error.message}`
+                                                        })
+                                                        .then((answer: any) => {
+
+                                                            if(answer.permissionToUpdateTable){
+                                                                this.libraryCommand.addJWTokenAuth(tableAnswer.tableName, (response) => {
+                                                                    if (response.data) {
+                                                                        Log.log(response.data);
+                                                                        this.libraryCommand.spinner.start('Successfully created JWTAuth');
+                                                                        this.libraryCommand.spinner.succeed();
+                                                                    }
+                                                                    else {
+                                                                        this.libraryCommand.spinner.text = response.error.code;
+                                                                        this.libraryCommand.spinner.fail();
+                                                                        Log.highlightError(response.error.message);
+                                                                    }
+                                                                    process.exit();
+                                                                }, answer.permissionToUpdateTable);
+                                                            }
+                                                            else{
+                                                                process.exit();
+                                                            }
+                                                        });
+                                                    }
+                                                    else{
+                                                        this.libraryCommand.spinner.text = response.error.code;
+                                                        this.libraryCommand.spinner.fail();
+                                                        Log.highlightError(response.error.message);
+                                                        process.exit();
+                                                    }
+                                                }
+            
+                                            });
+                                        });
+                                    }
+                                    else {
+                                        this.libraryCommand.spinner.fail();
+                                        Log.log(response.error.message);
+                                    }
+                                });
+                            }
+                            else {
+                                this.libraryCommand.spinner.start('Creating table ...');
+                                this.libraryCommand.addJWTokenAuth(null, (response) => {
+                                    if (response.data) {
+                                        Log.log(response.data);
+                                        this.libraryCommand.spinner.start('Successfully created JWTAuth');
+                                        this.libraryCommand.spinner.succeed();
+                                    }
+                                    else {
+                                        this.libraryCommand.spinner.text = response.error.code;
+                                        this.libraryCommand.spinner.fail();
+                                        Log.highlightError(response.error.message);
+                                    }
+
+                                    process.exit();
+                                });
+                            }
+                        });
+                    }
+                }
+                else {
+                    Log.highlightError('You are not in a root "dotnet core" project directory, \n Run: @!"winuvo new your-project-name --connectionString=your-connection"!@ to create a new one.');
+                }
+            });
 
         // INVALID COMMANDS
         program
