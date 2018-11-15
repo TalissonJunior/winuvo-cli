@@ -15,7 +15,7 @@ export class ProjectValidator {
      */
     public static validateName(name: string): string {
         if (name) {
-            return name.replace(new RegExp("[a-zA-Z0-9-/]", "g"), "");
+            return name.replace(new RegExp("[a-zA-Z0-9_/]", "g"), "");
         }
 
         return null;
