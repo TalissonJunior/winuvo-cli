@@ -92,6 +92,10 @@ export const MyslToCSHARPTypes: any = {
         type: 'string'
     },
 
+    'MEDIUMTEXT': {
+        type: 'string'
+    },
+
     'LONGTEXT': {
         type: 'string'
     },
