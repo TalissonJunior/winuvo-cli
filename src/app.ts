@@ -1,7 +1,7 @@
 import * as program from 'commander';
 import * as inquirer from 'inquirer';
 import * as json from '../package.json';
-import { NewCommand, GenerateCommand, LibraryCommand } from './commands';
+import { NewCommand, GenerateCommand, LibraryCommand, EditorCommand } from './commands';
 import { Log } from './utilities';
 import { ProjectValidator } from './modules';
 import { GenerateType, ProjectType, LibraryType, ActionType } from './enums';
@@ -12,11 +12,13 @@ class App {
     private newCommand: NewCommand;
     private generateCommand: GenerateCommand;
     private libraryCommand: LibraryCommand;
+    private editorCommand: EditorCommand;
 
     constructor() {
         this.newCommand = new NewCommand();
         this.generateCommand = new GenerateCommand();
         this.libraryCommand = new LibraryCommand();
+        this.editorCommand = new EditorCommand();
         this.initialize();
     }
 
@@ -25,6 +27,15 @@ class App {
         program
             .version((<any>json).version)
             .description((<any>json).description);
+
+        // EDITOR COMMAND
+        program
+            .command("editor")
+            .alias('e')
+            .description('Starts editor')
+            .action(() => {
+             this.editorCommand.start();
+            });
 
         // NEW COMMAND
         program
