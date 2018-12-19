@@ -15,6 +15,12 @@ npm install winuvo -g
 
 ## Winuvo commands
 
+Open winuvo editor
+
+```sh
+winuvo editor
+```
+
 Create a new project
 
 ```sh

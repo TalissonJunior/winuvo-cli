@@ -3,7 +3,7 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
-    entry: './src/app.ts',
+    entry: './src/winuvo-cli/app.ts',
     target: 'node',
     node: {
         __dirname: false
@@ -24,7 +24,7 @@ module.exports = {
     ],
     plugins: [
         new tsLintPlugin({
-            files: ['./src/**/*.ts']
+            files: ['./src/winuvo-cli/**/*.ts']
         }),
         new webpack.BannerPlugin({ banner: "#!/usr/bin/env node", raw: true })
     ],

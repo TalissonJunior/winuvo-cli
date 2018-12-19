@@ -13,12 +13,10 @@
     "exclude": [
         "node_modules",
         "dist",
-        "release"
+        "release",
+        "winuvo-editor"
     ],
     "types": [
         "node"
-    ],
-    "typeRoots": [
-        "./src/typings.d.ts"
     ]
 }

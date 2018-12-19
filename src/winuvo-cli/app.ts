@@ -1,6 +1,6 @@
 import * as program from 'commander';
 import * as inquirer from 'inquirer';
-import * as json from '../package.json';
+import * as json from '../../package.json';
 import { NewCommand, GenerateCommand, LibraryCommand, EditorCommand } from './commands';
 import { Log } from './utilities';
 import { ProjectValidator } from './modules';
@@ -34,7 +34,20 @@ class App {
             .alias('e')
             .description('Starts editor')
             .action(() => {
-             this.editorCommand.start();
+                this.editorCommand.start((response: BaseResponse) => {
+
+                    if (response.data) {
+                        this.newCommand.spinner.text = `Editor finalizado com sucesso`;
+                        this.newCommand.spinner.succeed();
+                    }
+                    else {
+                        this.newCommand.spinner.text = response.error.code;
+                        this.newCommand.spinner.fail();
+                        Log.highlightError(response.error.message);
+                    }
+
+                    process.exit();
+                });
             });
 
         // NEW COMMAND
@@ -361,66 +374,66 @@ class App {
                                                 }
                                             }
                                         })
-                                        .then((tableAnswer: any) => {
-                                            this.libraryCommand.addJWTokenAuth(tableAnswer.tableName, (response) => {
-                                                if (response.data) {
-                                                    Log.log(response.data);
-                                                    this.libraryCommand.spinner.start('Successfully created JWTAuth');
-                                                    this.libraryCommand.spinner.succeed();
-                                                    process.exit();
-                                                }
-                                                else {
-                                                    this.libraryCommand.spinner.clear();
-                                                    
-                                                    if(response.error.code == 'missing-table-properties'){
-                                                        
-                                                        inquirer.prompt({
-                                                            type: 'list',
-                                                            name: 'permissionToUpdateTable',
-                                                            choices: [
-                                                                {
-                                                                    name: `Allow JWToken Library to add properties to table "${tableAnswer.tableName}"?`,
-                                                                    value: true
-                                                                },
-                                                                {
-                                                                    name: `Do not allow JWToken Library to add properties to table "${tableAnswer.tableName}" ? (this will quit the process)`,
-                                                                    value: false
-                                                                }
-                                                            ],
-                                                            message: `${tableAnswer.tableName} is missing properties ${response.error.message}`
-                                                        })
-                                                        .then((answer: any) => {
-
-                                                            if(answer.permissionToUpdateTable){
-                                                                this.libraryCommand.addJWTokenAuth(tableAnswer.tableName, (response) => {
-                                                                    if (response.data) {
-                                                                        Log.log(response.data);
-                                                                        this.libraryCommand.spinner.start('Successfully created JWTAuth');
-                                                                        this.libraryCommand.spinner.succeed();
-                                                                    }
-                                                                    else {
-                                                                        this.libraryCommand.spinner.text = response.error.code;
-                                                                        this.libraryCommand.spinner.fail();
-                                                                        Log.highlightError(response.error.message);
-                                                                    }
-                                                                    process.exit();
-                                                                }, answer.permissionToUpdateTable);
-                                                            }
-                                                            else{
-                                                                process.exit();
-                                                            }
-                                                        });
-                                                    }
-                                                    else{
-                                                        this.libraryCommand.spinner.text = response.error.code;
-                                                        this.libraryCommand.spinner.fail();
-                                                        Log.highlightError(response.error.message);
+                                            .then((tableAnswer: any) => {
+                                                this.libraryCommand.addJWTokenAuth(tableAnswer.tableName, (response) => {
+                                                    if (response.data) {
+                                                        Log.log(response.data);
+                                                        this.libraryCommand.spinner.start('Successfully created JWTAuth');
+                                                        this.libraryCommand.spinner.succeed();
                                                         process.exit();
                                                     }
-                                                }
-            
+                                                    else {
+                                                        this.libraryCommand.spinner.clear();
+
+                                                        if (response.error.code == 'missing-table-properties') {
+
+                                                            inquirer.prompt({
+                                                                type: 'list',
+                                                                name: 'permissionToUpdateTable',
+                                                                choices: [
+                                                                    {
+                                                                        name: `Allow JWToken Library to add properties to table "${tableAnswer.tableName}"?`,
+                                                                        value: true
+                                                                    },
+                                                                    {
+                                                                        name: `Do not allow JWToken Library to add properties to table "${tableAnswer.tableName}" ? (this will quit the process)`,
+                                                                        value: false
+                                                                    }
+                                                                ],
+                                                                message: `${tableAnswer.tableName} is missing properties ${response.error.message}`
+                                                            })
+                                                                .then((answer: any) => {
+
+                                                                    if (answer.permissionToUpdateTable) {
+                                                                        this.libraryCommand.addJWTokenAuth(tableAnswer.tableName, (response) => {
+                                                                            if (response.data) {
+                                                                                Log.log(response.data);
+                                                                                this.libraryCommand.spinner.start('Successfully created JWTAuth');
+                                                                                this.libraryCommand.spinner.succeed();
+                                                                            }
+                                                                            else {
+                                                                                this.libraryCommand.spinner.text = response.error.code;
+                                                                                this.libraryCommand.spinner.fail();
+                                                                                Log.highlightError(response.error.message);
+                                                                            }
+                                                                            process.exit();
+                                                                        }, answer.permissionToUpdateTable);
+                                                                    }
+                                                                    else {
+                                                                        process.exit();
+                                                                    }
+                                                                });
+                                                        }
+                                                        else {
+                                                            this.libraryCommand.spinner.text = response.error.code;
+                                                            this.libraryCommand.spinner.fail();
+                                                            Log.highlightError(response.error.message);
+                                                            process.exit();
+                                                        }
+                                                    }
+
+                                                });
                                             });
-                                        });
                                     }
                                     else {
                                         this.libraryCommand.spinner.fail();
